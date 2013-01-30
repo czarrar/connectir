@@ -114,7 +114,7 @@ subdist_sge_wrapper <- function(funcfiles1, funcfiles2=NULL, design_mat=NULL,
 # This script will prepare the relevant variables to run subdist_sge.runner
 subdist_sge <- function(inlist1, list.dists, 
                               blocksize, superblocksize, 
-                              inlist2==NULL, design_mat=NULL, 
+                              inlist2=NULL, design_mat=NULL, 
                               verbose=1, parallel=FALSE)
 {
     # Variables to indicate level of verbosity
