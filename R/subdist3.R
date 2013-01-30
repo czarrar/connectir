@@ -207,7 +207,7 @@ compute_subdist_sge_wrapper3 <- function(inlist1, list.dists,
         if (is.null(inlist2)) {
             vcat(verbose, "...copying set #1 => set #2")
             inlist2 <- inlist1
-        else {
+        } else {
             vcat(verbose, "...loading and scaling functional data - set #2")
             inlist2 <- load_funcs.read(inlist2, verbose, type="double", 
                                        shared=parallel)
