@@ -1,0 +1,28 @@
+#
+# NEWS for R package connectir
+#
+
+
+01-Sept-2011
+
+*   Add option to copy over background brain as an underlay (bg_image.nii.gz) 
+    for later analyses when creating subdist directory
+*   Add big_add_multiply_scalar function for Y = a*X + b (a and b are scalars)
+*   Port creation of gower matrix from R to C++
+
+
+10-Sept-2011
+
+*   Began switch to using Armadillo in C++ code for linear algebra operations
+*   Refactored compute subdist related functions for better memory handling
+*   Memory fix for gower matrix creation
+
+
+12-Sept-2011
+
+*   Refactered mdmr related functions for better memory handling
+*   Fixes to compute_subdist related functions
+
+13-Sept-2011
+
+*   Fixes to compute_mdmr related functions

@@ -1,0 +1,39 @@
+10
+
+dir
+452
+svn+ssh://zarrar@scm.r-forge.r-project.org/svnroot/niftir/pkg/connectir/data
+svn+ssh://zarrar@scm.r-forge.r-project.org/svnroot/niftir
+
+
+
+2011-04-23T22:23:59.836359Z
+5
+zarrar
+
+standard_2mm.nii.gz
+file
+
+
+
+
+2007-08-07T20:58:52.000000Z
+2b2769d1795711c1e040827a4a62433d
+2011-04-23T22:23:59.836359Z
+5
+zarrar
+has-props
+
+standard_4mm.nii.gz
+file
+
+
+
+
+2010-11-07T22:31:14.000000Z
+553a221ba839b7dfcb8978d8a51ab321
+2011-04-23T22:23:59.836359Z
+5
+zarrar
+has-props
+

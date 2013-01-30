@@ -1,0 +1,5 @@
+import(methods)
+import(bigmemory)
+import(bigextensions)
+exportPattern("^[^\\.]")
+useDynLib(connectir)

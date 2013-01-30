@@ -1,0 +1,28 @@
+FLAGS="PKG_CPPFLAGS=-I../inst/include"
+LIBS="PKG_LIBS=$(${R_HOME}/bin/Rscript -e 'Rcpp:::LdFlags()')"
+#LIBS=""
+
+echo -n "  checking for Sun Studio compiler..."
+CC=`${R_HOME}/bin/R CMD config CC`
+cmd=`echo $CC | grep -E 'suncc'`
+if test -n "$cmd"; then
+  echo "yes"
+  FLAGS="${FLAGS} -DINTERLOCKED_EXCHANGE_HACK"
+else
+  echo "no"
+fi
+
+echo -n "  checking for Darwin..."
+if test `uname` = "Linux" ; then
+  echo "no"
+  FLAGS="${FLAGS} -DLINUX"
+  LIBS="${LIBS} -lrt"
+#  LIBS="PKG_LIBS=-lrt"  
+else
+  echo "yes"
+fi
+
+LIBS="${LIBS} -L${R_HOME}/lib -lRlapack"
+
+echo "${FLAGS}" > src/Makevars
+echo "${LIBS}" >> src/Makevars
