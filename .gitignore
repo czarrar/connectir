@@ -3,3 +3,7 @@
 
 # Example code in package build process
 *-Ex.R
+
+# Build/Compile
+src/*.o
+src/*.so
