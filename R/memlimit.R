@@ -6,10 +6,13 @@ mb2n <- function(x) x/8*1024^2
 
 # opts => list(blocksize=0, memlimit=6, verbose=TRUE)
 # return opts
-get_subdist_memlimit <- function(opts, nsubs, nvoxs, subs.ntpts, nvoxs2=NULL) {
+get_subdist_memlimit <- function(opts, nsubs, nvoxs, subs.ntpts, nvoxs2=NULL, 
+                                 nforks=NULL) 
+{
     vcat(opts$verbose, "Determining memory demands")
 
-    nforks <- getDoParWorkers()
+    if (is.null(nforks))
+        nforks <- getDoParWorkers()
     mem_limit <- as.numeric(opts$memlimit)
     
     # RAM for functionals
