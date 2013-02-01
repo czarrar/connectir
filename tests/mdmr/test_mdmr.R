@@ -96,10 +96,14 @@ test_that("MDMR works appropriately", {
     dat <- create_init_data(nobs)
     formula <- dat$formula
     model <- dat$model
+    outdir <- tempdir()
     Gs <- create_Gs(nobs, nvoxs)
     
+    rm_files <- list.files(outdir, pattern="fperms", full.names=T)
+    if (length(rm_files) > 0) file.remove(rm_files)
+    
     # Comparison
-    comp.mdmr <- mdmr(Gs, formula, model, nperms=nperms, save.fperms=TRUE)
+    comp.mdmr <- mdmr(Gs, formula, model, nperms=nperms, save.fperms=TRUE, fperms.path=outdir)
     comp.pvals <- comp.mdmr$pvals
     comp.Fperms <- comp.mdmr$fstats  
       
@@ -108,7 +112,7 @@ test_that("MDMR works appropriately", {
     factor.names <- names(attr(modelinfo$qrhs, "factors2perm"))
     nfactors <- length(factor.names)
     ref.Fperms <- lapply(1:nfactors, function(fi) big.matrix(nperms+1, nvoxs))
-    mdmr.worker(modelinfo, Gs, comp.mdmr$perms, ref.Fperms)
+    invisible(mdmr.worker(modelinfo, Gs, comp.mdmr$perms, ref.Fperms))
     ref.pvals <- mdmr.fstats_to_pvals(ref.Fperms)
     
     # Evaluate
@@ -116,4 +120,122 @@ test_that("MDMR works appropriately", {
         expect_that(ref.Fperms[[fi]][,], equals(comp.Fperms[[fi]][,]))
     expect_that(ref.pvals[,], is_equivalent_to(comp.pvals[,]))
     expect_that(modelinfo, equals(comp.mdmr$modelinfo))
+    
+    rm_files <- list.files(outdir, pattern="fperms", full.names=T)
+    file.remove(rm_files)
 })
+
+
+test_that("MDMR works appropriately for a limited superblocksize", {
+    nobs <- 100; nvoxs <- 12; nperms <- 100
+    dat <- create_init_data(nobs)
+    formula <- dat$formula
+    model <- dat$model
+    outdir <- tempdir()
+    Gs <- create_Gs(nobs, nvoxs)
+    seeds <- sample(1:nperms)
+    
+    rm_files <- list.files(outdir, pattern="fperms", full.names=T)
+    if (length(rm_files) > 0) file.remove(rm_files)
+    
+    # Comparison
+    comp.mdmr <- mdmr(Gs, formula, model, nperms=nperms, save.fperms=TRUE, 
+                      superblocksize=3, fperms.path=outdir)
+    comp.pvals <- comp.mdmr$pvals[,]
+    comp.Fperms <- lapply(comp.mdmr$fstats, function(f) f[,])
+    
+    # Reference
+    modelinfo <- mdmr_model(formula, model)
+    factor.names <- names(attr(modelinfo$qrhs, "factors2perm"))
+    nfactors <- length(factor.names)
+    ref.Fperms <- lapply(1:nfactors, function(fi) big.matrix(nperms+1, nvoxs))
+    invisible(mdmr.worker(modelinfo, Gs, comp.mdmr$perms, ref.Fperms))
+    ref.pvals <- mdmr.fstats_to_pvals(ref.Fperms)
+    ref.pvals <- ref.pvals[,]
+    ref.Fperms <- lapply(ref.Fperms, function(f) f[,])
+    
+    # Evaluate
+    for (fi in 1:nfactors)
+        expect_that(ref.Fperms[[fi]], equals(comp.Fperms[[fi]]))
+    expect_that(ref.pvals, is_equivalent_to(comp.pvals))
+    
+    rm_files <- list.files(outdir, pattern="fperms", full.names=T)
+    file.remove(rm_files)
+})
+
+
+test_that("MDMR works appropriately for a limited blocksize", {
+    nobs <- 100; nvoxs <- 12; nperms <- 100
+    dat <- create_init_data(nobs)
+    formula <- dat$formula
+    model <- dat$model
+    outdir <- tempdir()
+    Gs <- create_Gs(nobs, nvoxs)
+    
+    rm_files <- list.files(outdir, pattern="fperms", full.names=T)
+    if (length(rm_files) > 0) file.remove(rm_files)
+    
+    # Reference 
+    ref.mdmr <- mdmr(Gs, formula, model, nperms=nperms, save.fperms=TRUE, 
+                     fperms.path=outdir)
+    ref.pvals <- ref.mdmr$pvals[,]
+    ref.Fperms <- lapply(ref.mdmr$fstats, function(f) f[,])
+    list.perms <- ref.mdmr$perms
+    
+    # Comparison
+    comp.mdmr <- mdmr(Gs, formula, model, nperms=nperms, save.fperms=TRUE, 
+                      blocksize=10, fperms.path=outdir, list.perms=list.perms)
+    comp.pvals <- comp.mdmr$pvals[,]
+    comp.Fperms <- lapply(comp.mdmr$fstats, function(f) f[,])
+    
+    rm(ref.mdmr, comp.mdmr)
+    
+    # Evaluate
+    nfactors <- length(ref.Fperms)
+    for (fi in 1:nfactors)
+        expect_that(ref.Fperms[[fi]], equals(comp.Fperms[[fi]]))
+    expect_that(ref.pvals, is_equivalent_to(comp.pvals))
+    
+    rm_files <- list.files(outdir, pattern="fperms", full.names=T)
+    file.remove(rm_files)
+})
+
+
+test_that("MDMR works appropriately for a limited blocksize and superblocksize", {
+    nobs <- 100; nvoxs <- 12; nperms <- 100
+    dat <- create_init_data(nobs)
+    formula <- dat$formula
+    model <- dat$model
+    outdir <- tempdir()
+    Gs <- create_Gs(nobs, nvoxs)
+    
+    rm_files <- list.files(outdir, pattern="fperms", full.names=T)
+    if (length(rm_files) > 0) file.remove(rm_files)
+    
+    # Reference 
+    ref.mdmr <- mdmr(Gs, formula, model, nperms=nperms, save.fperms=TRUE, 
+                     fperms.path=outdir)
+    ref.pvals <- ref.mdmr$pvals[,]
+    ref.Fperms <- lapply(ref.mdmr$fstats, function(f) f[,])
+    list.perms <- ref.mdmr$perms
+
+    # Comparison
+    comp.mdmr <- mdmr(Gs, formula, model, nperms=nperms, save.fperms=TRUE, 
+                      superblocksize=3, blocksize=10, fperms.path=outdir, 
+                      list.perms=list.perms)
+    comp.pvals <- comp.mdmr$pvals[,]
+    comp.Fperms <- lapply(comp.mdmr$fstats, function(f) f[,])
+    
+    rm(ref.mdmr, comp.mdmr)
+    
+    # Evaluate
+    nfactors <- length(ref.Fperms)
+    for (fi in 1:nfactors)
+        expect_that(ref.Fperms[[fi]], equals(comp.Fperms[[fi]]))
+    expect_that(ref.pvals, is_equivalent_to(comp.pvals))
+    
+    rm_files <- list.files(outdir, pattern="fperms", full.names=T)
+    file.remove(rm_files)
+})
+
+
