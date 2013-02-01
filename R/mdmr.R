@@ -28,6 +28,7 @@
 #' @param shared Share intermediate and final big matrices
 #' @param sge.info List containing njobs, nforks, nthreads, & ignore.proc.error
 #' @param permute can be rhs, hat, or hat_with_covariate
+#' @param list.perms
 #' @return list with modelinfo, pvals, fstats, and permutation indices
 mdmr <- function(G, formula, model, 
                  nperms=4999, factors2perm=NULL, superblocksize=length(voxs), 
@@ -37,7 +38,9 @@ mdmr <- function(G, formula, model,
                  verbose=1, parallel=FALSE, 
                  G.path=NULL, fperms.path=NULL, save.fperms=FALSE, 
                  type="double", shared=parallel, 
-                 sge.info=NULL, permute="rhs")
+                 sge.info=NULL, permute="rhs", 
+                 seeds=sample(1:nperms), 
+                 list.perms=NULL)
 {
     inform <- verbose==2
     verbose <- as.logical(verbose)
@@ -61,6 +64,8 @@ mdmr <- function(G, formula, model,
         stop("input Gower's matrix must be type big matrix and shared")
     if (!is.null(fperms.path) && !file.exists(fperms.path))
         stop("output path for Pseudo-F permutations does not exist")
+    if (save.fperms && is.null(fperms.path))
+        stop("must specify fperms.path if save.fperms")
     if (is.filebacked(G) && is.null(G.path))
         stop("G.path must be given when G is filebacked big matrix")
     if (!is.filebacked(G) && !is.null(G.path))
@@ -102,11 +107,13 @@ mdmr <- function(G, formula, model,
     
     # Permutations for each factor (fill in values later)
     vcat(verbose, "...preparing permutation matrices")
-    list.perms <- mdmr_perms.gather_perms(modelinfo$rhs, modelinfo$qrhs, 
-                                          nperms, strata, max.iter, 
-                                          include.orig=TRUE, 
-                                          verbose=verbose)
-        
+    if (is.null(list.perms)) {
+        list.perms <- mdmr_perms.gather_perms(modelinfo$rhs, modelinfo$qrhs, 
+                                              nperms, strata, max.iter, 
+                                              include.orig=TRUE, 
+                                              verbose=verbose)
+    }
+    
     # F-statistics (including permutations) for each factor
     # (will fill in values later)
     if (save.fperms) {
@@ -124,6 +131,8 @@ mdmr <- function(G, formula, model,
             return(bm)
         })
         list.fperms_desc <- lapply(list.Fperms, describe)
+        rm(list.Fperms); invisible(gc(F,T))
+        list.Fperms <- NULL
     } else {
         list.Fperms <- NULL
         list.fperms_desc <- NULL
@@ -133,7 +142,7 @@ mdmr <- function(G, formula, model,
          superblocks$n)
     vcat(verbose, "...with %i smaller blocks within each larger one",
          blocks$n)
-    
+        
     caller_for_superblocks <- function(si) {
         vcat(verbose, "large block %i", si)
         start.time <- Sys.time()
@@ -160,7 +169,7 @@ mdmr <- function(G, formula, model,
         list.partial_Fperms <- lapply(1:nfactors, function(fi) {
             big.matrix(nperms, sub_nvoxs, type=type, shared=TRUE)
         })
-        
+                
         # function to run mdmr for specific factor
         # with subset of permutations / voxels
         caller_for_mdmr_worker <- function(bi, include.orig=FALSE) {
@@ -169,41 +178,34 @@ mdmr <- function(G, formula, model,
             sub_nperms <- blocks$nperms[bi]
             include.orig <- ifelse(bi==1, TRUE, FALSE)
             
-            # subset of partial Fmats
-            vcat(verbose, "...extracting subset of partial f-stats")
-            list.subset_Fperms <- lapply(list.partial_Fperms, function(partial_Fperms) {
-                sub.big.matrix(partial_Fperms, firstRow=firstPerm, lastRow=lastPerm)
+            # RAM storage for fperms computed in current iteration
+            list.subset_Fperms <- lapply(1:nfactors, function(fi) {
+                big.matrix(sub_nperms, sub_nvoxs, type=type, shared=FALSE)
             })
-            #list.subset_Fperms <- lapply(1:nfactors, function(fi) {
-            #    big.matrix(sub_nperms, sub_nvoxs, type=type, shared=FALSE)
-            #})
             
             # subset of permutation indices
             vcat(verbose, "...preparing subset of permutation indices")
             list.subset_perms <- lapply(1:nfactors, function(fi) {
-                list.perms[[fi]][,firstPerm:lastPerm]
+                list.perms[[fi]][,firstPerm:lastPerm,drop=FALSE]
             })
             
-            # calculate pseudo-F statistic
-            # and return permutation indices
+            # calculate pseudo-F statistic 
+            # & return permutation indices
             mdmr.worker(modelinfo, tmp_Gs, list.subset_perms, 
                         list.subset_Fperms, permute=permute, 
                         type=type, shared=shared, 
                         verbose=verbose)
             
-            # copy subset of partial Fmats
-            #vcat(verbose, "...copying partial f-stats")
-            #for (fi in 1:nfactors) {
-            #    orig_Fperms <- list.subset_Fperms[[fi]]
-            #    target_Fperms <- list.partial_Fperms[[fi]]
-            #    bedeepcopy(x=orig_Fperms, y=target_Fperms, 
-            #               y.rows=firstPerm:lastPerm)
-            #}
+            # remove perm indices
+            vcat(verbose, "...removing permutation indices")
+            rm(list.subset_perms); invisible(gc(F,T))
             
-            # remove subset Fmats and perm indices
-            vcat(verbose, "...removing subset f-stats and permutation indices")
-            rm(list.subset_Fperms, list.subset_perms); invisible(gc(F,T))
-                       
+            # copy over current Fperms to shared memory
+            for (fi in 1:nfactors)
+                bedeepcopy(x=list.subset_Fperms[[fi]], y=list.partial_Fperms[[fi]], 
+                           y.rows=firstPerm:lastPerm)
+            rm(list.subset_Fperms); invisible(gc(F,T))
+            
             return(NULL)
         }
         
@@ -219,30 +221,29 @@ mdmr <- function(G, formula, model,
         
         # save F-stats
         if (save.fperms) {
+            # Notes:
+            # ------
+            # This is only for saving otherwise list isn't retained
+            # 
+            # I have a list of blocks with a list of factors 
+            # containing a big matrix of Fperms sub_nperms x sub_nvoxs
+            
             vcat(verbose, "...saving F-statistics to disk")
-            list.Fperms <- llply(1:nfactors, function(fi) {
-                iFperms <- list.partial_Fperms[[fi]]
+            l_ply(1:nfactors, function(fi) {
+                Fperms <- attach.big.matrix(list.fperms_desc[[fi]], 
+                                            backingpath=fperms.path)
                 
-                if (!is.null(fperms.path)) {
-                    Fperms <- attach.big.matrix(list.fperms_desc[[fi]], 
-                                                backingpath=fperms.path)
-                } else {
-                    Fperms <- list.Fperms[[fi]]
-                }
+                iFperms <- list.partial_Fperms[[fi]]
                 oFperms <- sub.big.matrix(Fperms, 
-                                firstCol=firstVox, lastCol=lastVox, 
-                                backingpath=fperms.path)
+                            firstCol=firstVox, lastCol=lastVox, 
+                            backingpath=fperms.path)
                 
                 deepcopy(x=iFperms, y=oFperms)
                 
-                if (!is.null(fperms.path))
-                    Fperms <- free.memory(Fperms, fperms.path)
-                
-                Fperms
-            }, .progress=progress, .inform=inform, .parallel=parallel)
+                rm(Fperms); invisible(gc(F,T))
+            }, .progress=progress)
         }
         
-        # remove temporary F-stats
         rm(list.partial_Fperms); invisible(gc(F,T))
         
         # time/duration
@@ -288,7 +289,6 @@ mdmr <- function(G, formula, model,
     # Reload F-stats
     if (!is.null(fperms.path)) {
         vcat(verbose, "...reloading F-perms")
-        rm(list.Fperms); invisible(gc(F,T))
         list.Fperms <- lapply(list.fperms_desc, function(desc) {
             attach.big.matrix(desc, backingpath=fperms.path)
         })
