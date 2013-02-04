@@ -241,6 +241,7 @@ tryCatch({
       vcat(opts$verbose, paste(infiles1[checks!=0], collapse="\n"))
       vstop("Quitting due to errors with 1st set of input functional data")
   }
+  inlist1 <- list(files=infiles1, ftype="nifti", mask=mask1)
   
   if (use.set2) {
       vcat(opts$verbose, "Loading and masking functional data (Part 2)")
@@ -260,6 +261,7 @@ tryCatch({
           vstop("Quitting due to errors with 2nd set of input functional data")
       }
   }
+  inlist1 <- list(files=infiles2, ftype="nifti", mask=mask2)
   
   invisible(gc(FALSE, TRUE))
   
@@ -269,7 +271,7 @@ tryCatch({
   ###
   
   vcat(opts$verbose, "Creating output directory and files")
-  dists_list <- create_subdist(outdir, infiles1, mask1, infiles2, mask2, 
+  dists_list <- create_subdist(outdir, inlist1, inlist2, 
                                opts, shared=parallel_forks)
   invisible(gc(FALSE, TRUE))
   
