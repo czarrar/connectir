@@ -261,7 +261,7 @@ tryCatch({
           vstop("Quitting due to errors with 2nd set of input functional data")
       }
   }
-  inlist1 <- list(files=infiles2, ftype="nifti", mask=mask2)
+  inlist2 <- list(files=infiles2, ftype="nifti", mask=mask2)
   
   invisible(gc(FALSE, TRUE))
   
