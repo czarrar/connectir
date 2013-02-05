@@ -142,25 +142,30 @@ create_subdist <- function(outdir, inlist1, inlist2, opts, ...) {
         }
     }
     
-    # Get a header file from the first functional
-    vcat(opts$verbose, "...getting header from first functionals")
-    if (inlist1$ftype %in% c("nifti", "nifti4d")) {
-        hdr <- read.nifti.header(inlist1$files[1])
-        return(hdr$dim[4])
-    } else if (inlist$ftype %in% c("space", "tab", "csv")) {
-        cmd <- sprintf("wc -l %s | awk '{print $1}'", inlist$files[i])
-        return(system(cmd, intern=T))
-    } else {
-        vstop("Cannot read # of time-points for type '%s'", inlist$ftype)
-    }
+    ## Get a header file from the first functional
+    #vcat(opts$verbose, "...getting header from first functionals")
+    #if (inlist1$ftype %in% c("nifti", "nifti4d")) {
+    #    hdr <- read.nifti.header(inlist1$files[1])
+    #    return(hdr$dim[4])
+    #} else if (inlist$ftype %in% c("space", "tab", "csv")) {
+    #    cmd <- sprintf("wc -l %s | awk '{print $1}'", inlist$files[i])
+    #    return(system(cmd, intern=T))
+    #} else {
+    #    vstop("Cannot read # of time-points for type '%s'", inlist$ftype)
+    #}
     
     # Write the brain masks
     vcat(opts$verbose, "...saving masks")
     if (inlist1$ftype %in% c("nifti", "nifti4d")) {
         hdr <- read.nifti.header(inlist1$files[1])
-        hdr$dim <- hdr$dim[1:3]; hdr$pixdim <- hdr$pixdim[1:3]
-        outfile <- file.path(outdir, "mask.nii.gz")
-        write.nifti(inlist1$mask, hdr, outfile=outfile, odt="char")
+        if (length(hdr$dim) == 2) {
+            outfile <- file.path(outdir, "mask.txt")
+            write.table(inlist1$mask, file=outfile, row.names=F, col.names=F)
+        } else {
+            hdr$dim <- hdr$dim[1:3]; hdr$pixdim <- hdr$pixdim[1:3]
+            outfile <- file.path(outdir, "mask.nii.gz")
+            write.nifti(inlist1$mask, hdr, outfile=outfile, odt="char")
+        }
     } else if (inlist1$ftype %in% c("space", "tab", "csv")) {
         outfile <- file.path(outdir, "mask.txt")
         write.table(inlist1$mask, file=outfile, row.names=F, col.names=F)
@@ -170,6 +175,14 @@ create_subdist <- function(outdir, inlist1, inlist2, opts, ...) {
     if (use.set2) {
         if (inlist2$ftype %in% c("nifti", "nifti4d")) {
             hdr <- read.nifti.header(inlist2$files[1])
+            if (length(hdr$dim) == 2) {
+                outfile <- file.path(outdir, "mask.txt")
+                write.table(inlist2$mask, file=outfile, row.names=F, col.names=F)
+            } else {
+                hdr$dim <- hdr$dim[1:3]; hdr$pixdim <- hdr$pixdim[1:3]
+                outfile <- file.path(outdir, "mask.nii.gz")
+                write.nifti(inlist2$mask, hdr, outfile=outfile, odt="char")
+            }
             hdr$dim <- hdr$dim[1:3]; hdr$pixdim <- hdr$pixdim[1:3]
             outfile <- file.path(outdir, "mask2.nii.gz")
             write.nifti(inlist2$mask, hdr, outfile=outfile, odt="char")
