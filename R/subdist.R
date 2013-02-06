@@ -33,6 +33,8 @@ check_gmat <- function(gmat) {
 
 # This checks that everything in folder is good
 check_subdist <- function(sdir) {
+    library(tools)
+    
     # Checking Functions
     checkpath <- function(p, is.dir) { 
         if (!file.exists(p)) {
@@ -51,7 +53,11 @@ check_subdist <- function(sdir) {
     sdir <- abspath(sdir)
     optsfile <- file.path(sdir, "options.rda")
     infuncdir <- file.path(sdir, "input_funcs")
-    maskfile <- file.path(sdir, "mask.nii.gz")
+    maskfile <- Sys.glob(file.path(sdir, "mask.*"))
+    if (file_ext(maskfile) == "txt")
+        mask_ftype <- "space"
+    else
+        mask_ftype <- "nifti"
     distfiles <- file.path(sdir, 
         c("subdist.desc", "subdist.bin", "subdist_gower.desc", "subdist_gower.bin")
     )
@@ -82,7 +88,7 @@ check_subdist <- function(sdir) {
     lapply(distfiles, checkpath, FALSE)
     
     # Count number of seed voxels
-    mask <- read.mask(maskfile)
+    mask <- mask.read(maskfile, mask_ftype)
     nvoxs <- sum(mask)
     
     # Read in subdist and seedmask + check
@@ -176,16 +182,13 @@ create_subdist <- function(outdir, inlist1, inlist2, opts, ...) {
         if (inlist2$ftype %in% c("nifti", "nifti4d")) {
             hdr <- read.nifti.header(inlist2$files[1])
             if (length(hdr$dim) == 2) {
-                outfile <- file.path(outdir, "mask.txt")
+                outfile <- file.path(outdir, "mask2.txt")
                 write.table(inlist2$mask, file=outfile, row.names=F, col.names=F)
             } else {
                 hdr$dim <- hdr$dim[1:3]; hdr$pixdim <- hdr$pixdim[1:3]
-                outfile <- file.path(outdir, "mask.nii.gz")
+                outfile <- file.path(outdir, "mask2.nii.gz")
                 write.nifti(inlist2$mask, hdr, outfile=outfile, odt="char")
             }
-            hdr$dim <- hdr$dim[1:3]; hdr$pixdim <- hdr$pixdim[1:3]
-            outfile <- file.path(outdir, "mask2.nii.gz")
-            write.nifti(inlist2$mask, hdr, outfile=outfile, odt="char")
         } else if (inlist2$ftype %in% c("space", "tab", "csv")) {
             outfile <- file.path(outdir, "mask2.txt")
             write.table(inlist2$mask, file=outfile, row.names=F, col.names=F)
