@@ -1,7 +1,6 @@
 #ifndef _connectir_CONNECTIR
 #define _connectir_CONNECTIR
 
-#include <Rcpp.h>
 #include <RcppArmadillo.h>
 //using namespace Rcpp; 
 //using namespace Rcpp::sugar;
