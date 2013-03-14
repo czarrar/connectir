@@ -489,6 +489,6 @@ mdmr.fstats_to_pvals <- function(list.Fperms, verbose=TRUE, parallel=FALSE)
     
     Pmat <- laply(1:nfactors, function(fi)
                     .Call("mdmr_fstats_to_pvals", list.Fperms[[fi]]), 
-                    .progress=progress, .parallel=parallel)
+                    .progress=progress, .parallel=parallel, .drop=FALSE)
     return(t(Pmat))
 }

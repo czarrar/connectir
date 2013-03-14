@@ -184,7 +184,7 @@ clust_mdmr.values <- function(ps.mat, mask, voxdim,
     clust_values <- laply(1:nperms, function(i) {
         ct <- cluster.table(1-ps.mat[i,], 1-vox.thresh, voxdim, mask)
         c(size=ct$max.size, mass=ct$max.mass, rel=ct$max.rel)
-    }, .progress=progress, .parallel=parallel)
+    }, .progress=progress, .parallel=parallel, .drop=FALSE)
     
     return(clust_values)
 }
@@ -298,7 +298,7 @@ clust_mdmr <- function(obj, maskfile, vox.thresh=0.05, clust.thresh=0.05,
         comps <- laply(1:nperms, function(i) {
             ct <- cluster.table(1-ps.mat[i,], 1-vox.thresh, hdr$dim, mask)
             c(size=ct$max.size, mass=ct$max.mass, rel=ct$max.rel)
-        }, .progress="text", .parallel=parallel)
+        }, .progress="text", .parallel=parallel, .drop=FALSE)
         
         # P-values for cluster size/mass
         vcat(verbose, "\t...getting cluster p-values and clusters")
