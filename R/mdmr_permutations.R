@@ -233,7 +233,7 @@ mdmr_perms.gather_perms_for_factor <- function(rhs, grps, f.ind, nperms,
             }
         }
         return(ps)
-    }, .progress=progress)
+    }, .progress=progress, .drop=FALSE)
     pmat <- t(pmat)
     
     if (include.orig) 
