@@ -131,10 +131,10 @@ overlap_masks <- function(files, automask=FALSE, verbose=TRUE)
         reader <- gen_big_reader(ftype, type="double", shared=FALSE)
         # ghetto fix for not setting the type properly...todo
         fun <- function(...) suppressWarnings(mask.auto(...))
-        masks <- laply(files, fun, reader, .progress=progress, .drop=FALSE)
+        masks <- laply(files, fun, reader, .progress=progress)
     } else {
         vcat(verbose, "...reading in masks")
-        masks <- laply(files, mask.read, ftype, .progress=progress, .drop=FALSE)
+        masks <- laply(files, mask.read, ftype, .progress=progress)
     }
     
     vcat(verbose, "...checking for NaNs")
@@ -393,12 +393,6 @@ load_and_mask_func_data2 <- function(xs, read_fun, mask=NULL, verbose=FALSE,
     gc(FALSE, TRUE)
     
     return(dat.list)
-}
-
-check_funcs.voxs <- function(headers, verbose=FALSE)
-{
-    ref.voxs <- headers$dim
-    llply()
 }
 
 check_func_data <- function(xs, dat.list, extra=FALSE, verbose=FALSE, parallel=FALSE) 
