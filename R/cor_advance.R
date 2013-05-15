@@ -56,7 +56,7 @@ kendall_ref <- function(ratings) {
 kendall_cpp <- function(xbm) {
     raw <- .Call("kendall_worker", xbm)
     ns <- nrow(xbm); nr <- ncol(xbm)
-    coeff <- (12 * comp * (ns - 1))/(nr^2 * (ns^3 - ns))
+    coeff <- (12 * raw * (ns - 1))/(nr^2 * (ns^3 - ns))
     return(coeff)
 }
 
