@@ -52,6 +52,14 @@ kendall_ref <- function(ratings) {
     return(coeff)
 }
 
+# This is the C version of the simple kendall's W
+kendall_cpp <- function(xbm) {
+    raw <- .Call("kendall_worker", xbm)
+    ns <- nrow(xbm); nr <- ncol(xbm)
+    coeff <- (12 * comp * (ns - 1))/(nr^2 * (ns^3 - ns))
+    return(coeff)
+}
+
 # This computes a kendall's W examining the consistency of
 # each voxel's connectivity map across participants
 kendall <- function(subs.bigmats, blocksize, ztransform=FALSE, parallel=FALSE, 
