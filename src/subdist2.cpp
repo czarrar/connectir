@@ -63,6 +63,7 @@ SEXP subdist_combine_submaps(SEXP Slist_corMaps, SEXP Sseed, SEXP SvoxInds,
 {
     try {
         // Setup Inputs
+        //printf("Setting up\n");
         Rcpp::List list_corMaps(Slist_corMaps);
         index_type seed = static_cast<index_type>(DOUBLE_DATA(Sseed)[0] - 1);
         Rcpp::NumericVector voxInds(SvoxInds);
@@ -73,11 +74,13 @@ SEXP subdist_combine_submaps(SEXP Slist_corMaps, SEXP Sseed, SEXP SvoxInds,
         
         // Copy over subject connectivity maps from list to matrix
         // and scale
+        //printf("Copying over\n");
         SEXP SsubCorMaps; 
         arma::mat subCorMaps(1,1); const double* old_sptr = subCorMaps.memptr();
         index_type voxi, sub, vox;
         for (sub = 0; sub < nsubs; ++sub)
         {
+            //printf("subject: #%i\n", static_cast<int>(sub+1));
             PROTECT(SsubCorMaps = VECTOR_ELT(Slist_corMaps, sub));
             sbm_to_arma_xd(SsubCorMaps, subCorMaps);
             UNPROTECT(1);
@@ -89,6 +92,7 @@ SEXP subdist_combine_submaps(SEXP Slist_corMaps, SEXP Sseed, SEXP SvoxInds,
             }
         }
         
+        //printf("freeing up memory\n");
         seedMap = NULL;
         free_arma(seedCorMaps, old_mptr);
         free_arma(subCorMaps, old_sptr);
