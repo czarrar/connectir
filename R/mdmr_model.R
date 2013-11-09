@@ -132,6 +132,8 @@ mdmr_model.qr <- function(rhs, factors2perm=NULL)
                 class(factors2perm))
     }
     
+    print(factors2perm)
+    print(adj)
     factors2perm <- factors2perm + adj
     attr(qrhs, "factors2perm") <- factors2perm
     
@@ -192,7 +194,7 @@ mdmr_model.rank <- function(rhs, qrhs, throw_error=TRUE)
 #'                hat_with_covariates option will multiply the output of h2 by
 #'                (I - H1)
 #' @return hat matrix
-mdmr_model.hat_matrix_2 <- function(rhs, grps, f.ind, o.inds=NULL, permute="rhs")
+mdmr_model.hat_matrix_2 <- function(rhs, grps, f.ind, o.inds=NULL, permute="rhs_residuals")
 {
     TOL <- 1e-07
     u.grps <- unique(grps)
@@ -218,6 +220,31 @@ mdmr_model.hat_matrix_2 <- function(rhs, grps, f.ind, o.inds=NULL, permute="rhs"
         qrX <- qr(Xj, tol = TOL)
         Q <- qr.Q(qrX)
         H2 <- H - tcrossprod(Q[, 1:qrX$rank])
+        
+        H2
+    }
+    
+    # Permutes residuals of rhs column of interest and then calculate H2 matrix
+    permute_rhs_residuals <- function() {
+        # H
+        Xj      <- rhs
+        cols    <- grps %in% u.grps[f.ind]
+        ## permute residuals
+        for (i in which(cols)) {
+            model   <- lm(Xj[,i] ~ Xj[,!cols])
+            Xj[,i]  <- model$residuals[o.inds] + model$fitted.values
+        }
+        ## hat matrixx
+        qrX     <- qr(Xj, tol=TOL)
+        Q       <- qr.Q(qrX)
+        H       <- tcrossprod(Q[,1:qrX$rank])
+    
+        # H2
+        cols    <- grps %in% u.grps[-f.ind]
+        Xj      <- rhs[,cols]
+        qrX     <- qr(Xj, tol = TOL)
+        Q       <- qr.Q(qrX)
+        H2      <- H - tcrossprod(Q[, 1:qrX$rank])
         
         H2
     }
@@ -270,6 +297,7 @@ mdmr_model.hat_matrix_2 <- function(rhs, grps, f.ind, o.inds=NULL, permute="rhs"
     
     H2 <- switch(permute, 
         rhs = permute_rhs(), 
+        rhs_residuals = permute_rhs_residuals(), 
         hat = permute_hat(), 
         hat_with_covariates = permute_hat_with_covariates(), 
         stop(sprintf("permute must be rhs, hat, or hat_with_covariates and not %s", permute))
@@ -294,7 +322,7 @@ mdmr_model.hat_matrix_2 <- function(rhs, grps, f.ind, o.inds=NULL, permute="rhs"
 #'                hat_with_covariates option will multiply the output of h2 by
 #'                (I - H1)
 #' @return hat matrix
-mdmr_model.hat_matrix_ih <- function(rhs, grps, f.ind, o.inds=NULL, permute="rhs")
+mdmr_model.hat_matrix_ih <- function(rhs, grps, f.ind, o.inds=NULL, permute="rhs_residuals")
 {
     TOL <- 1e-07
     u.grps <- unique(grps)
@@ -311,6 +339,24 @@ mdmr_model.hat_matrix_ih <- function(rhs, grps, f.ind, o.inds=NULL, permute="rhs
         qrX <- qr(Xj, tol=TOL)
         Q <- qr.Q(qrX)
         H <- tcrossprod(Q[,1:qrX$rank])
+        
+        diag(nobs) - H
+    }
+    
+    # Permutes residuals of rhs column of interest and then calculate H2 matrix
+    permute_rhs_residuals <- function() {
+        # H
+        Xj      <- rhs
+        cols    <- grps %in% u.grps[f.ind]
+        ## permute residuals
+        for (i in which(cols)) {
+            model   <- lm(Xj[,i] ~ Xj[,!cols])
+            Xj[,i]  <- model$residuals[o.inds] + model$fitted.values
+        }
+        ## hat matrixx
+        qrX     <- qr(Xj, tol=TOL)
+        Q       <- qr.Q(qrX)
+        H       <- tcrossprod(Q[,1:qrX$rank])
         
         diag(nobs) - H
     }
@@ -354,6 +400,7 @@ mdmr_model.hat_matrix_ih <- function(rhs, grps, f.ind, o.inds=NULL, permute="rhs
     
     IH <- switch(permute, 
         rhs = permute_rhs(), 
+        rhs_residuals = permute_rhs_residuals(), 
         hat = permute_hat(), 
         hat_with_covariates = permute_hat_with_covariates(), 
         stop(sprintf("permute must be rhs, hat, or hat_with_covariates and not %s", permute))
