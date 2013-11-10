@@ -1,29 +1,117 @@
+.distance_pearson <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
+    scale_fast(seedMaps, to.copy=FALSE, byrows=transpose)
+    .Call("subdist_pearson_distance", seedMaps, dmats, as.double(colind), 
+          as.logical(transpose), PACKAGE="connectir")
+}
+
+.distance_pearson_shrink <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
+    library(corpcor)
+    seedMaps <- ifelse(transpose, t(seedMaps[,]), seedMaps[,])
+    dmats[,colind] <- sqrt(2*(1 - cor.shrink(seedMaps, verbose=FALSE, ...)[,]))
+}
+
+.distance_icov <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
+    library(glasso)
+	# since we are just centering
+	center_fast(seedMaps, to.copy=FALSE, byrows=transpose)
+	# big_cor will give covariance & not correlation matrix
+	oc <- big_cor(seedMaps, byrows=transpose)
+	if (transpose)
+		r <- norm_glasso(t(oc[,]), ...)
+	else
+		r <- norm_glasso(oc[,], ...)
+    dmats[,colind] <- sqrt(2*as.vector(1 - r))
+	rm(oc, r); gc(F,T)
+}
+
+.distance_spearman <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
+    seedMaps <- ifelse(transpose, t(seedMaps[,]), seedMaps[,])
+    smat <- cor(seedMaps, method="spearman")
+    dmat <- sqrt(2*(1-smat))
+    dmats[,colind] <- as.vector(dmat)
+}
+
+.distance_kendall <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
+    seedMaps <- ifelse(transpose, t(seedMaps[,]), seedMaps[,])
+    smat <- cor(seedMaps, method="kendall")
+    dmat <- sqrt(2*(1-smat))
+    dmats[,colind] <- as.vector(dmat)
+}
+
+.distance_concordance <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
+    library(ICSNP)
+    
+    if (transpose)
+        seedMaps <- as.big.matrix(t(seedMaps[,]))
+    
+    n   <- ncol(seedMaps)
+    k   <- nrow(seedMaps)
+    b   <- colmean(seedMaps)
+    s2  <- colvar(seedMaps) * (k-1)/k
+
+    scale_fast(seedMaps, to.copy=FALSE)
+    r   <- big_cor(seedMaps)[,]
+    r   <- r[lower.tri(r)]
+
+    s2m <- as.matrix(s2)
+    sxy <- r * sqrt(pair.prod(s2m))
+    p   <- 2 * sxy/(pair.sum(s2m) + (pair.diff(s2m))^2)
+    pd  <- sqrt(2*(1-p))
+    
+    class(pd) <- "dist"
+    attr(pd, 'Size') <- n
+    pd  <- as.matrix(pd)
+
+    dmats[,colind] <- as.vector(pd)
+}
+
+# below not really to be used
+.distance_concordance_ref <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
+    library(epiR)
+    seedMaps <- ifelse(transpose, t(seedMaps[,]), seedMaps[,])
+    n <- ncol(seedMaps)
+    smat <- matrix(1, n, n)
+    for (i in 1:(n-1)) {
+        for (j in (i+1):n) {
+            smat[i,j] <- smat[j,i] <- epi.ccc(seedMaps[,i], seedMaps[,j])$rho.c[[1]]
+        }
+    }
+    dmats[,colind] <- sqrt(2*as.vector(1-smat))
+}
+
+.distance_euclidean <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
+    # Since the euclidean dist is based on row comparison, 
+    # the transpose has an opposite function here than the other fcts
+    seedMaps <- ifelse(transpose, seedMaps[,], t(seedMaps[,]))
+    dmat <- as.matrix(dist(seedMaps, method="euclidean"))
+    dmats[,colind] <- as.vector(dmat)
+}
+
+.distance_chebyshev <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
+    seedMaps <- ifelse(transpose, t(seedMaps[,]), seedMaps[,])
+    n <- ncol(seedMaps)
+    dmat <- matrix(0, n, n)
+    for (i in 1:(n-1)) {
+        for (j in (i+1):n) {
+            dmat[i,j] <- dmat[j,i] <- max(abs(seedMaps[,i] - seedMaps[,j]))
+        }
+    }
+    dmats[,colind] <- as.vector(dmat)    
+}
+
+.distance_mahalanobis <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
+    seedMaps <- ifelse(transpose, t(seedMaps[,]), seedMaps[,])
+    invCov <- solve(cov(seedMaps))
+    SQRT <- with(svd(invCov), u %*% diag(d^0.5) %*% t(v))
+    dmat <- as.matrix(dist(seedMaps %*% SQRT))
+    dmats[,colind] <- as.vector(dmat)
+}
+
 .subdist_distance <- function(seedMaps, dmats, colind, 
                               transpose=FALSE, method="pearson", ...)
 {
-    if (method == "pearson") {
-        scale_fast(seedMaps, to.copy=FALSE, byrows=transpose)
-        .Call("subdist_pearson_distance", seedMaps, dmats, as.double(colind), 
-              as.logical(transpose), PACKAGE="connectir")
-    } else if (method == "shrink.pearson") {
-        library(corpcor)
-        if (transpose) seedMaps <- t(seedMaps[,])
-        dmats[,colind] <- 1 - cor.shrink(seedMaps, verbose=FALSE, ...)[,]
-    } else if (method == "icov") {
-        library(glasso)
-		# since we are just centering
-		center_fast(seedMaps, to.copy=FALSE, byrows=transpose)
-		# big_cor will give covariance & not correlation matrix
-		oc <- big_cor(seedMaps, byrows=transpose)
-		if (transpose)
-			r <- norm_glasso(t(oc[,]), ...)
-		else
-			r <- norm_glasso(oc[,], ...)
-        dmats[,colind] <- as.vector(1 - r)
-		rm(oc, r); gc(F,T)
-    } else {
-        vstop("Unrecognized method %s", method)
-    }
+    dfun <- get(sprintf(".distance_%s", method))
+    dfun(seedMaps, dmats, colind, transpose, ...)
 }
 
 test_sdist <- function(...) .subdist_distance(...)
