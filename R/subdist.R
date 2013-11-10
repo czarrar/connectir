@@ -4,14 +4,24 @@ check_dmat <- function(dmat) {
     diag_dmat <- diag(dmat)
     off_dmat <- dmat[lower.tri(dmat)]
     
+    mystop <- function(msg) {
+        save(dmat, file="check_dmat_stop.rda")
+        stop(msg)
+    }
+    
+    mywarn <- function(msg) {
+        save(dmat, file="check_dmat_warn.rda")
+        warning(msg)
+    }
+    
     if (any(is.na(dmat)))
-        stop("NAs were present in distance matrix")
+        mystop("NAs were present in distance matrix")
     
     if (all(dmat < TOL))
-        stop("All zeros in distance matrix")
+        mystop("All zeros in distance matrix")
     
     if (all(diag_dmat>TOL)) {
-        warning("Diagonal of distance matrix is all non-zeros\n")
+        mywarn("Diagonal of distance matrix is all non-zeros\n")
     } else if (any(diag_dmat>TOL)) {
         cat("Diagonal of distance matrix has non-zeros\n")
         print(diag_dmat)
