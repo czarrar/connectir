@@ -94,6 +94,7 @@ SEXP mdmr_worker(SEXP SGmat, SEXP SFperms,
             // Error Variance
             arma::mat ErrorVariance = arma::trans(IHmat) * Gmat;
             
+            
             /***
             * Peusod-F Statistic
             ***/
