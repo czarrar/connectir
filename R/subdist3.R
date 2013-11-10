@@ -1,12 +1,12 @@
 .distance_pearson <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
-    TOL <- 1e-8
+    TOL <- .Machine$double.eps
     scale_fast(seedMaps, to.copy=FALSE, byrows=transpose)
     .Call("subdist_pearson_distance", seedMaps, dmats, as.double(colind), 
           as.logical(transpose), as.double(TOL), PACKAGE="connectir")
 }
 
 .distance_pearson_shrink <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
-    TOL <- 1e-8
+    TOL <- .Machine$double.eps
     
     library(corpcor)
     seedMaps <- ifelse(transpose, t(seedMaps[,]), seedMaps[,])
@@ -14,7 +14,7 @@
 }
 
 .distance_icov <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
-    TOL <- 1e-8
+    TOL <- .Machine$double.eps
     
     library(glasso)
 	# since we are just centering
@@ -30,27 +30,23 @@
 }
 
 .distance_spearman <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
-    TOL <- 1e-8
-    
     seedMaps <- ifelse(transpose, t(seedMaps[,]), seedMaps[,])
     smat <- cor(seedMaps, method="spearman")
-    dmat <- sqrt(2*((1+TOL)-smat))
+    dmat <- sqrt(2*(1-smat))
     dmats[,colind] <- as.vector(dmat)
 }
 
-.distance_kendall <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
-    TOL <- 1e-8
-    
+.distance_kendall <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {    
     seedMaps <- ifelse(transpose, t(seedMaps[,]), seedMaps[,])
     smat <- cor(seedMaps, method="kendall")
-    dmat <- sqrt(2*((1+TOL)-smat))
+    dmat <- sqrt(2*(1-smat))
     dmats[,colind] <- as.vector(dmat)
 }
 
 .distance_concordance <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
     library(ICSNP)
     
-    TOL <- 1e-8
+    TOL <- .Machine$double.eps
     
     if (transpose)
         seedMaps <- as.big.matrix(t(seedMaps[,]))
