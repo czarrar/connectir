@@ -131,7 +131,7 @@ test_that("read_regressors fails when any value is empty", {
 
 
 
-context("...reading regressors")
+context("...assess memory limit")
 
 test_that("memory_limit returns the size of inputs when supplied", {
     for (type in c("nifti", "txt")) {
@@ -161,4 +161,60 @@ test_that("memory_limit returns some size when inputs not supplied", {
     }
 })
 
+
+
+context("...check functionals")
+
+create_nifti_data <- function(cdims) {
+    tmpdir <- tempdir()
+    setwd(tmpdir)
+    
+    ofiles <- file.path(tmpdir, sprintf("tmp_func_%02i.nii.gz", 
+                                        1:length(cdims)))
+    
+    template_file <- system.file("data/test_func_inds.nii.gz", package="niftir")
+    hdr <- read.nifti.header(template_file)
+    
+    for (i in 1:length(cdims)) {
+        cdim <- cdims[[i]]
+        ofile <- ofiles[[i]]
+        
+        new_hdr <- hdr
+        new_hdr$dim <- cdim
+        
+        img <- array(rnorm(prod(dim)), cdim)
+        write.nifti(img, hdr, outfile=ofile)
+    }
+    
+    ofiles
+}
+
+remove_nifti_data <- function(files) remove.files(files)
+
+test_that("all the input data have the same voxel dimensions", {
+    cdims <- rep(list(c(1,2,3)), 5)
+    files <- create_nifti_data(cdims)
+    
+    load_funcs.prepare()
+    
+    check_data()
+    
+    remove_nifti_data(files)
+})
+
+test_that("will fail when input data don't have the same voxel dimensions", {
+    
+})
+
+test_that("no NaNs in the 2nd row", {
+    
+})
+
+test_that("when extra, there are no NaNs", {
+    
+})
+
+test_that("when extra, the standard deviation > 0", {
+    
+})
 
