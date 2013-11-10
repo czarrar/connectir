@@ -1,8 +1,16 @@
+.distance_quick_fix <- function(dmat) {
+    dmat[is.nan(dmat)] <- 0
+    as.vector(dmat)
+}
+
 .distance_pearson <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
     TOL <- .Machine$double.eps
     scale_fast(seedMaps, to.copy=FALSE, byrows=transpose)
     .Call("subdist_pearson_distance", seedMaps, dmats, as.double(colind), 
           as.logical(transpose), as.double(TOL), PACKAGE="connectir")
+    
+    dmat <- matrix(dmats[,colind], sqrt(nrow(dmats)))
+    dmats[,colind] <- .distance_quick_fix(dmat)
 }
 
 .distance_pearson_shrink <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
@@ -11,6 +19,8 @@
     library(corpcor)
     seedMaps <- ifelse(transpose, t(seedMaps[,]), seedMaps[,])
     dmat <- sqrt(2*((1+TOL) - cor.shrink(seedMaps, verbose=FALSE, ...)[,]))
+    
+    .distance_quick_fix(dmat)
 }
 
 .distance_icov <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
@@ -25,7 +35,8 @@
 		r <- norm_glasso(t(oc[,]), ...)
 	else
 		r <- norm_glasso(oc[,], ...)
-    dmats[,colind] <- sqrt(2*as.vector((1+TOL) - r))
+    dmat <- sqrt(2*((1+TOL) - r))
+    dmats[,colind] <- .distance_quick_fix(dmat)
 	rm(oc, r); gc(F,T)
 }
 
@@ -33,14 +44,14 @@
     seedMaps <- ifelse(transpose, t(seedMaps[,]), seedMaps[,])
     smat <- cor(seedMaps, method="spearman")
     dmat <- sqrt(2*(1-smat))
-    dmats[,colind] <- as.vector(dmat)
+    dmats[,colind] <- .distance_quick_fix(dmat)
 }
 
 .distance_kendall <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {    
     seedMaps <- ifelse(transpose, t(seedMaps[,]), seedMaps[,])
     smat <- cor(seedMaps, method="kendall")
     dmat <- sqrt(2*(1-smat))
-    dmats[,colind] <- as.vector(dmat)
+    dmats[,colind] <- .distance_quick_fix(dmat)
 }
 
 .distance_concordance <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
@@ -69,7 +80,7 @@
     attr(pd, 'Size') <- n
     pd  <- as.matrix(pd)
 
-    dmats[,colind] <- as.vector(pd)
+    dmats[,colind] <- .distance_quick_fix(pd)
 }
 
 # below not really to be used
@@ -91,7 +102,7 @@
     # the transpose has an opposite function here than the other fcts
     seedMaps <- ifelse(transpose, seedMaps[,], t(seedMaps[,]))
     dmat <- as.matrix(dist(seedMaps, method="euclidean"))
-    dmats[,colind] <- as.vector(dmat)
+    dmats[,colind] <- .distance_quick_fix(dmat)
 }
 
 .distance_chebyshev <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
@@ -103,7 +114,7 @@
             dmat[i,j] <- dmat[j,i] <- max(abs(seedMaps[,i] - seedMaps[,j]))
         }
     }
-    dmats[,colind] <- as.vector(dmat)    
+    dmats[,colind] <- .distance_quick_fix(dmat)    
 }
 
 .distance_mahalanobis <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
@@ -111,7 +122,7 @@
     invCov <- solve(cov(seedMaps))
     SQRT <- with(svd(invCov), u %*% diag(d^0.5) %*% t(v))
     dmat <- as.matrix(dist(seedMaps %*% SQRT))
-    dmats[,colind] <- as.vector(dmat)
+    dmats[,colind] <- .distance_quick_fix(dmat)
 }
 
 .subdist_distance <- function(seedMaps, dmats, colind, 
