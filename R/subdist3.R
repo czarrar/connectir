@@ -1,5 +1,5 @@
 .distance_quick_fix <- function(dmat) {
-    dmat[is.nan(dmat)] <- 0
+    dmat[is.na(dmat)] <- 0
     as.vector(dmat)
 }
 
