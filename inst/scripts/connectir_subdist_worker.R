@@ -17,7 +17,7 @@ option_list <- list(
     make_option(c("-t", "--threads"), type="integer", default=1, help="Number of computer processors to use in parallel by multi-threading matrix algebra operations [default: %default]", metavar="number"),
     make_option("--extrachecks", action="store_true", default=FALSE, help="Will do a more rigorous check of the input functionals before any calculations"),
     make_option("--sparseconn", action="store_true", default=FALSE, help="Computes  inverse covariance estimates when calculating connectivity maps"), 
-    make_option("--sparsedist", action="store_true", default=FALSE, help="Computes 1 - inverse covariance estimates when calculating the distance between subject connectivity maps"), 
+    make_option("--method", type="character", default="pearson", help="Select the distance function applied to compare subject connectivity maps. Options include pearson, spearman, kendall, concordance, euclidean, chebyshev, mahalanobis, pearson_shrink, and icov."), 
     make_option("--overwrite", action="store_true", default=FALSE, help="Overwrite output that already exists (default is not to overwrite already existing output)"),
     make_option("--no-link-functionals", action="store_true", default=FALSE, help="Will not create soft links to each of the functional images with the subdist directory"),
     make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"), 
@@ -125,11 +125,7 @@ tryCatch({
       verbosity <- 0
   }
   
-  if (opts$sparsedist) {
-      method <- "icov"
-  } else {
-      method <- "pearson"
-  }
+  method <- opts$method
   
   if (opts$sparseconn) {
       glasso <- TRUE
