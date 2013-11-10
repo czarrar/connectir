@@ -165,11 +165,11 @@ SEXP subdist_pearson_distance(SEXP SseedCorMaps, SEXP Sdmats, SEXP Sdcol,
         if (istrans[0] == TRUE) {
             index_type nvoxs = static_cast<index_type>(seedCorMaps.n_cols);
             index_type df = nvoxs - 1;
-            dmat = 1 - (seedCorMaps * arma::trans(seedCorMaps))/df;
+            dmat = arma::sqrt(2*(1 - (seedCorMaps * arma::trans(seedCorMaps))/df));
         } else {
             index_type nvoxs = static_cast<index_type>(seedCorMaps.n_rows);
             index_type df = nvoxs - 1;
-            dmat = 1 - (arma::trans(seedCorMaps) * seedCorMaps)/df;
+            dmat = arma::sqrt(2*(1 - (arma::trans(seedCorMaps) * seedCorMaps)/df));
         }
         
         free_arma(seedCorMaps, old_sptr);
