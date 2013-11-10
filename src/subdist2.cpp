@@ -153,9 +153,11 @@ SEXP subdist_combine_and_trans_submaps(SEXP Slist_corMaps, SEXP Sseed, SEXP Svox
 
 // 1 - pearson correlation
 SEXP subdist_pearson_distance(SEXP SseedCorMaps, SEXP Sdmats, SEXP Sdcol, 
-                              SEXP Sistrans)
+                              SEXP Sistrans, SEXP Stolerance)
 {
     try {
+        double tol = DOUBLE_DATA(Stolerance)[0];
+        
         arma::mat seedCorMaps(1,1);
         const double* old_sptr = sbm_to_arma_xd(SseedCorMaps, seedCorMaps);
                 
@@ -169,12 +171,14 @@ SEXP subdist_pearson_distance(SEXP SseedCorMaps, SEXP Sdmats, SEXP Sdcol,
         if (istrans[0] == TRUE) {
             index_type nvoxs = static_cast<index_type>(seedCorMaps.n_cols);
             index_type df = nvoxs - 1;
-            dmat = arma::sqrt(2*(1 - (seedCorMaps * arma::trans(seedCorMaps))/df));
+            dmat = (1.0+tol) - (seedCorMaps * arma::trans(seedCorMaps))/df;
         } else {
             index_type nvoxs = static_cast<index_type>(seedCorMaps.n_rows);
             index_type df = nvoxs - 1;
-            dmat = arma::sqrt(2*(1 - (arma::trans(seedCorMaps) * seedCorMaps)/df));
+            dmat = (1.0+tol) - (arma::trans(seedCorMaps) * seedCorMaps)/df;
         }
+        
+        dmat = arma::sqrt(2*dmat);
         
         free_arma(seedCorMaps, old_sptr);
         free_arma(dmat, old_dptr);

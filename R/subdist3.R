@@ -1,16 +1,21 @@
 .distance_pearson <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
+    TOL <- 1e-8
     scale_fast(seedMaps, to.copy=FALSE, byrows=transpose)
     .Call("subdist_pearson_distance", seedMaps, dmats, as.double(colind), 
-          as.logical(transpose), PACKAGE="connectir")
+          as.logical(transpose), as.double(TOL), PACKAGE="connectir")
 }
 
 .distance_pearson_shrink <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
+    TOL <- 1e-8
+    
     library(corpcor)
     seedMaps <- ifelse(transpose, t(seedMaps[,]), seedMaps[,])
-    dmats[,colind] <- sqrt(2*(1 - cor.shrink(seedMaps, verbose=FALSE, ...)[,]))
+    dmat <- sqrt(2*((1+TOL) - cor.shrink(seedMaps, verbose=FALSE, ...)[,]))
 }
 
 .distance_icov <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
+    TOL <- 1e-8
+    
     library(glasso)
 	# since we are just centering
 	center_fast(seedMaps, to.copy=FALSE, byrows=transpose)
@@ -20,26 +25,32 @@
 		r <- norm_glasso(t(oc[,]), ...)
 	else
 		r <- norm_glasso(oc[,], ...)
-    dmats[,colind] <- sqrt(2*as.vector(1 - r))
+    dmats[,colind] <- sqrt(2*as.vector((1+TOL) - r))
 	rm(oc, r); gc(F,T)
 }
 
 .distance_spearman <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
+    TOL <- 1e-8
+    
     seedMaps <- ifelse(transpose, t(seedMaps[,]), seedMaps[,])
     smat <- cor(seedMaps, method="spearman")
-    dmat <- sqrt(2*(1-smat))
+    dmat <- sqrt(2*((1+TOL)-smat))
     dmats[,colind] <- as.vector(dmat)
 }
 
 .distance_kendall <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
+    TOL <- 1e-8
+    
     seedMaps <- ifelse(transpose, t(seedMaps[,]), seedMaps[,])
     smat <- cor(seedMaps, method="kendall")
-    dmat <- sqrt(2*(1-smat))
+    dmat <- sqrt(2*((1+TOL)-smat))
     dmats[,colind] <- as.vector(dmat)
 }
 
 .distance_concordance <- function(seedMaps, dmats, colind, transpose=FALSE, ...) {
     library(ICSNP)
+    
+    TOL <- 1e-8
     
     if (transpose)
         seedMaps <- as.big.matrix(t(seedMaps[,]))
@@ -56,7 +67,7 @@
     s2m <- as.matrix(s2)
     sxy <- r * sqrt(pair.prod(s2m))
     p   <- 2 * sxy/(pair.sum(s2m) + (pair.diff(s2m))^2)
-    pd  <- sqrt(2*(1-p))
+    pd  <- sqrt(2*((1+TOL)-p))
     
     class(pd) <- "dist"
     attr(pd, 'Size') <- n

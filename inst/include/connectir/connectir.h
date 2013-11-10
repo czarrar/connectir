@@ -83,7 +83,7 @@ RcppExport SEXP subdist_combine_submaps(SEXP Slist_corMaps, SEXP Sseed,
 RcppExport SEXP subdist_combine_and_trans_submaps(SEXP Slist_corMaps, SEXP Sseed, 
                                                   SEXP SvoxInds, SEXP SseedCorMaps);
 RcppExport SEXP subdist_pearson_distance(SEXP SseedCorMaps, SEXP Sdmats, SEXP Sdcol, 
-                                         SEXP trans);
+                                         SEXP Sistrans, SEXP Stolerance);
 RcppExport SEXP big_gower(SEXP SX, SEXP SY,  
                           SEXP SX_firstCol, SEXP SX_lastCol, 
                           SEXP SY_firstCol, SEXP SY_lastCol);
