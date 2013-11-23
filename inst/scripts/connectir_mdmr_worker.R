@@ -16,6 +16,7 @@ option_list <- list(
     make_option("--blocksize", type="integer", default=0, dest="blocksize", help="How many sets of voxels should used in eaciteration of computing the pseudo F-statistics (0 = auto) [default: %default]", metavar="number"),
     make_option("--memlimit", type="double", default=6, dest="memlimit", help="If blocksize is set to auto (--blocksize=0), then will set the blocksize to use a maximum of RAM specified by this option  [default: %default]", metavar="number"),
     make_option("--save-perms", action="store_true", default=FALSE, dest="saveperms", help="Save all the permuted psuedo-F stats? [default: %default]"),
+    make_option("--permfiles", type="character", default=NULL, help="Descriptor filenames (seperated by a comma) that each represent a matrix (nsubs x nperms) of permutations. The number of files must match the number of factors2perm. Using this option would override the -p/--permutations option.", metavar="file"), 
     make_option("--overwrite", action="store_true", default=FALSE, help="Overwrite output if it already exists (default is not to overwrite already existing output)"),
     make_option(c("-d", "--debug"), action="store_true", default=FALSE, help="Like verbose but will also print more helpful error messages when --forks is >1"), 
     make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print extra output [default]"),
@@ -80,7 +81,7 @@ tryCatch({
   opts$subdist <- abspath(opts$subdist)
   ## model
   if (!file.exists(opts$model))
-      stop("-m/--model ", opts$model, " does not exist")
+      stop("-m/--model ", opts$model, " does not exist")  
   ## output
   opts$outdir <- file.path(opts$indir, args[1])
   if (file.exists(opts$outdir))
@@ -161,6 +162,23 @@ tryCatch({
       else
           opts$strata <- model[[opts$strata]]
   }
+  
+  # permutations
+  if (!is.null(opts$permfiles)) {
+      opts$permfiles <- sub(", ", ",", opts$permfiles)
+      opts$permfiles <- strsplit(opts$permfiles, ",")[[1]]
+      
+      # check
+      for (pf in opts$permfiles) {
+          if (!file.exists(pf))
+              stop("--permfiles ", pf, " does not exist")
+      }
+      
+      # load
+      list.perms <- lapply(opts$permfiles, attach.big.matrix)
+  } else {
+      list.perms <- NULL
+  }
     
   # output
   vcat(opts$verbose, "...creating output directory '%s'", opts$outdir)
@@ -213,7 +231,7 @@ tryCatch({
                    blocksize=opts$blocksize, verbose=verbosity, 
                    parallel=parallel_forks, shared=parallel_forks, 
                    G.path=xdist.path, fperms.path=fperms.path, save.fperms=TRUE, 
-                   sge.info=sge.info)
+                   sge.info=sge.info, list.perms=list.perms)
   
   # Eventually remove calling of different functions for SGE vs not
   #if (is.null(opts$jobs)) {
