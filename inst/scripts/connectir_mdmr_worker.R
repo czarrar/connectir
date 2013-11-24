@@ -175,7 +175,11 @@ tryCatch({
       }
       
       # load
-      list.perms <- lapply(opts$permfiles, attach.big.matrix)
+      list.perms <- lapply(opts$permfiles, function(pf) {
+          pmat <- as.matrix(attach.big.matrix(pf))
+          pmat <- mdmr_perms.to_integer(pmat)
+          pmat
+      })
   } else {
       list.perms <- NULL
   }
