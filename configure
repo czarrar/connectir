@@ -12,14 +12,19 @@ else
   echo "no"
 fi
 
-echo -n "  checking for Darwin..."
+echo -n "  checking for OS..."
 if test `uname` = "Linux" ; then
-  echo "no"
+  echo "Linux"
   FLAGS="${FLAGS} -DLINUX"
-  LIBS="${LIBS} -lrt"
-#  LIBS="PKG_LIBS=-lrt"  
+  LIBS="PKG_LIBS=-lrt -lm"
+elif test `uname` = "SunOS" ; then
+  echo "Solaris"
+  LIBS="PKG_LIBS=-lrt -lm"
+elif test `uname` = "Darwin" ; then
+  echo "Darwin"
+  FLAGS="${FLAGS} -DDARWIN"
 else
-  echo "yes"
+  echo "Other:" `uname`
 fi
 
 LIBS="${LIBS} -L${R_HOME}/lib -lRlapack"

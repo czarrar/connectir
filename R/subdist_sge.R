@@ -1,21 +1,34 @@
 # subdist_sge_wrapper <- function()
 
 # Returns design matrix
-subdist.read_regressors <- function(design_fpath, verbose=TRUE)
+subdist.read_regressors <- function(fpath, formula=NULL, verbose=TRUE)
 {
     vcat(verbose, "Reading in regressors")
     
-    if (!file.exists(design_fpath))
-        vstop("Regressor file '%s' does not exist", design_fpath)
+    if (!file.exists(fpath))
+        vstop("regressor file '%s' does not exist", fpath)
     
-    design_mat <- as.matrix(read.table(design_fpath, header=TRUE))
+    model <- read.table(fpath, header=TRUE)
+    
+    if (any(is.na(model)) || any(is.null(model)))
+        vstop("There is a missing element in regressor file '%s'", fpath)
+    
+    # Convert to design matrix if input is data frame
+    if (!is.null(formula)) {
+        rhs.frame <- model.frame(formula, model, drop.unused.levels = TRUE)
+        rhs <- model.matrix(formula, rhs.frame)
+    } else {
+        rhs <- model
+    }
+    
+    rhs <- as.matrix(rhs[,])
     
     ## check rank deficiency
-    k <- qlm_rank(as.big.matrix(design_mat))
-    if (k < ncol(design_mat))
-        vstop("design matrix '%s' is rank deficient", design_fpath)
+    k <- qlm_rank(as.big.matrix(rhs))
+    if (k < ncol(rhs))
+        vstop("regressor design matrix '%s' is rank deficient", fpath)
     
-    return(design_mat)
+    return(rhs)
 }
 
 subdist.prepare_and_mask_funcs <- function(func_files, verbose=TRUE, ...)
@@ -31,7 +44,10 @@ subdist.prepare_and_mask_funcs <- function(func_files, verbose=TRUE, ...)
     return(inlist)
 }
 
-subdist.memory_limit <- function(opts, inlist1, inlist2=NULL, verbose=TRUE)
+# TODO: redo memory 
+subdist.memory_limit <- function(memlimit, blocksize, superblocksize, 
+                                 inlist1, inlist2=NULL, verbose=TRUE, 
+                                 nforks=NULL)
 {
     vcat(verbose, "Determining memory limit/reqs")
     
@@ -49,15 +65,17 @@ subdist.memory_limit <- function(opts, inlist1, inlist2=NULL, verbose=TRUE)
         }
     } else {
         nvoxs2 <- NULL
-    }    
+    }
     
     nsubs <- inlist1$nsubs
     nvoxs1 <- inlist1$nvoxs
     nvoxs2 <- inlist2$nvoxs
     
-    opts <- get_subdist_memlimit(opts, nsubs, nvoxs1, ntpts1, nvoxs2)
+    opts <- list(memlimit=memlimit, verbose=verbose, 
+                 blocksize=blocksize, superblocksize=superblocksize)
+    opts <- get_subdist_memlimit(opts, nsubs, nvoxs1, ntpts1, nvoxs2, nforks)
     
-    return(opts)
+    list(blocksize=opts$blocksize, superblocksize=opts$superblocksize)
 }
 
 subdist.check_funcs <- function(inlist, verbose=TRUE, extra_checks=FALSE, 
@@ -92,56 +110,75 @@ subdist.create_dists <- function(opts, outdir, inlist1, inlist2=NULL, ...)
     return(ret)
 }
 
-subdist_sge_wrapper <- function(funcfiles1, funcfiles2=NULL, design_mat=NULL, 
-                                verbose=TRUE, extra_checks=FALSE, ...)
+subdist_wrapper <- function(funcfiles1, funcfiles2=NULL, design_mat=NULL, 
+                            verbose=TRUE, parallel=FALSE, 
+                            extra_checks=FALSE, 
+                            # sge.info, memlimit, blocksize, superblocksize, nforks
+                            ...)
 {
+    ###
+    # Setup
+    ###
+    
+    # 1. Covariates of Non-Intererest
     if (!is.null(design_mat))
         design_mat <- subdist.read_regressors(design_mat, verbose)
     
+    # 2. Prepare functional files and mask
     inlist1 <- subdist.prepare_and_mask_funcs(funcfiles1, verbose, ...)
-    if (is.null(inlist2))
+    if (is.null(funcfiles2))
         inlist2 <- NULL
     else
         inlist2 <- subdist.prepare_and_mask_funcs(funcfiles2, verbose, ...)
     
-    subdist.memory_limit(opts, inlist1, inlist2, verbose)
+    # 3. Check memory limits
+    ###  and Set block sizes
+    l <- subdist.memory_limit(memlimit, blocksize, superblocksize, 
+                              inlist1, inlist2, verbose, nforks)
+    blocksize <- l$blocksize
+    superblocksize <- l$superblocksize
+    superblocks <- niftir.split.indices(1, inlist1$nvoxs, by=superblocksize)
     
+    # 4. Check input functionals
     subdist.check_funcs(inlist1, verbose, extra_checks=TRUE, 
-                        parallel=FALSE)
+                        parallel=parallel)
+    if (!is.null(inlist2)) {
+        subdist.check_funcs(inlist2, verbose, extra_checks=extra_checks, 
+                            parallel=parallel)
+    }
     
-}
-
-# This script will prepare the relevant variables to run subdist_sge.runner
-subdist_sge <- function(inlist1, list.dists, 
-                              blocksize, superblocksize, 
-                              inlist2=NULL, design_mat=NULL, 
-                              verbose=1, parallel=FALSE)
-{
-    # Variables to indicate level of verbosity
-    ## inform will show debugging information
-    inform <- verbose==2
-    verbosity <- verbose
-    verbose <- as.logical(verbose)
+    # 5. Setup distances
+    list.dists <- subdist.create_dists(opts, outdir, inlist1, inlist2, ...)
     
-    vcat(verbose, "Setup")
+    # 6. Scale the time-series?
+    ## no scaling if connectivity is computed via an inverse covariance matrix
+    glasso <- list(...)$glasso
+    scale <- ifelse(is.null(glasso), FALSE, !glasso)
+    
+    
+    ###
+    # When not using sge
+    ###
+    
+    if (is.null(sge.info)) {
+        # Read and scale input functionals
+        inlist1 <- load_funcs.read_and_scale(inlist1, verbose, to.copy=FALSE, 
+                                             parallel=parallel, scale=scale, 
+                                             ...)
+        if (!is.null(inlist2)) {
+            inlist2 <- load_funcs.read_and_scale(inlist2, verbose, 
+                                                 to.copy=FALSE, 
+                                                 parallel=parallel, 
+                                                 scale=scale, ...)
+        }
         
-    # Super Blocks
-    ## steps in which will go through the voxels or ROIs (related to inlist1)
-    vcat(verbose, "...determine super-blocks")
-    superblocks <- niftir.split.indices(1, nvoxs, by=superblocksize)
+        # Call regular subdist wrapper
+        # TODO
+    }
     
+    # Call subdist sge wrapper
     
-    
-    preplist <- list(
-        inform = inform, 
-        verbosity = verbosity, 
-        verbose = verbose, 
-        dist_names = list(sdist=sdist.fname, gdist=gdist.fname, bpath=bpath), 
-        nsubs = nsubs, 
-        nvoxs = nvoxs, 
-        design_mat = design_mat, 
-        superblocks = superblocks
-    )
+    subdist_sge(inlist1, list.dists, blocksize, superblocksize, inlist2, 
+                design_mat, verbose*1, parallel, ...)
 }
-
 
