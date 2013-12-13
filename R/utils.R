@@ -14,6 +14,10 @@ vsystem <- function(verbose, cmd, ...) {
         stop("command failed")
 }
 
+is.installed <- function(mypkg){
+    is.element(mypkg, installed.packages()[,1])
+} 
+
 set_parallel_procs <- function(nforks=1, nthreads=1, verbose=FALSE, force=FALSE) {
     vcat(verbose, "Setting %i parallel forks", nforks)
     suppressPackageStartupMessages(library("doMC"))
@@ -46,7 +50,7 @@ set_parallel_procs <- function(nforks=1, nthreads=1, verbose=FALSE, force=FALSE)
     if (existsFunction("setMKLthreads", where=topenv(.GlobalEnv))) {
         vcat(verbose, "...using Intel's MKL")
         setMKLthreads(nthreads)
-    } else {
+    } else if (is.installed("blasctl")) {
         # cover all our blases
         vcat(verbose, "...using GOTOBLAS or Other")
         suppressPackageStartupMessages(library("blasctl"))
