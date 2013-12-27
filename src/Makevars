@@ -1,2 +1,0 @@
-PKG_CPPFLAGS=-I../inst/include -DDARWIN
-PKG_LIBS=/Library/Frameworks/R.framework/Versions/2.15/Resources/library/Rcpp/lib/x86_64/libRcpp.a -L/Library/Frameworks/R.framework/Resources/lib -lRlapack

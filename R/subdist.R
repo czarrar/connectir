@@ -1,5 +1,5 @@
 check_dmat <- function(dmat) {
-    TOL <- .Machine$double.eps ^ 0.5
+    TOL <- sqrt(.Machine$double.eps)*100
     dmat <- abs(as.matrix(dmat))
     diag_dmat <- diag(dmat)
     off_dmat <- dmat[lower.tri(dmat)]
