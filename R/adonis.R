@@ -221,7 +221,7 @@ mdmr.prepare.fperms <- function(modelinfo, nperms, nvoxs, backingpath=NULL, ...)
     })
 }
 
-mdmr_worker <- function(firstVox, lastVox, Gmat, H2mats, IHmat, df.Res, df.Exp, Pmat, Fperms) {
+mdmr.worker2 <- function(firstVox, lastVox, Gmat, H2mats, IHmat, df.Res, df.Exp, Pmat, Fperms) {
     # n = number of subjects
     # where H2mat has rows of H's (n^2 rows) and cols of # of permutations
     # where Gmat has rows of dmats (n^2 rows)  and cols of # of voxels
