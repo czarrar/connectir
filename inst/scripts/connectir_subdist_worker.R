@@ -176,8 +176,11 @@ tryCatch({
   }
   
   mask1 <- get_mask(infiles1, opts$brainmask1)
+  if (sum(mask1) == 0) stop("Mask for --brainmask1 is empty")
+  
   if (use.set2) {
       mask2 <- get_mask(infiles2, opts$brainmask2)
+      if (sum(mask2) == 0) stop("Mask for --brainmask2 is empty")
   } else {
       mask2 <- NULL
   }
