@@ -117,8 +117,8 @@ tryCatch({
   vcat(opts$verbose, "Setup outputs")
   
   omat <- big.matrix(nrow(imat), length(voxs), type=typeof(imat), init=0, 
-                     backingfile=paste(outprefix, ".bin", sep=""), 
-                     descriptorfile=paste(outprefix, ".desc", sep=""),
+                     backingfile=paste(basename(outprefix), ".bin", sep=""), 
+                     descriptorfile=paste(basename(outprefix), ".desc", sep=""),
                      backingpath=dirname(outprefix))
   
   ###
