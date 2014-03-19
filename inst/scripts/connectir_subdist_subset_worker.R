@@ -106,7 +106,7 @@ tryCatch({
       }
       voxs <- which(mask==2)
    } else if (!is.null(opts$voxels)) {
-       voxs <- eval(parse(text=opt$voxels))
+       voxs <- eval(parse(text=opts$voxels))
    }
   
   
