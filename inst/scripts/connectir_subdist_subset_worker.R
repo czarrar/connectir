@@ -11,9 +11,9 @@ option_list <- list(
     make_option("--blocksize", type="integer", default=0, dest="blocksize", help="How many sets of columns or voxels should used in each iteration of computing the element-wise average (0 = auto) [default: %default]", metavar="number"),
     make_option("--memlimit", type="double", default=4, dest="memlimit", help="If blocksize is set to auto (--blocksize=0), then will set the blocksize to use a maximum of RAM specified by this option  [default: %default]", metavar="number"),
     make_option("--overwrite", action="store_true", default=FALSE, help="Overwrite output if it already exists (default is not to overwrite already existing output)"),
-    make_option(c("-d", "--debug"), action="store_true", default=FALSE, help="Like verbose but will also print more helpful error messages when --forks is >1"), 
-    make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print extra output [default]"),
-    make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output")
+    make_option("--debug", action="store_true", default=FALSE, help="Like verbose but will also print more helpful error messages when --forks is >1"), 
+    make_option("--verbose", action="store_true", default=TRUE, help="Print extra output [default]"),
+    make_option("--quiet", action="store_false", dest="verbose", help="Print little output")
 )
 
 # Make class/usage
