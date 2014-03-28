@@ -236,7 +236,7 @@ tryCatch({
                    superblocksize=opts$superblocksize, voxs=voxs, 
                    blocksize=opts$blocksize, verbose=verbosity, 
                    parallel=parallel_forks, shared=parallel_forks, 
-                   G.path=xdist.path, fperms.path=fperms.path, save.fperms=TRUE, 
+                   G.path=xdist.path, fperms.path=fperms.path, save.fperms=opts$saveperms, 
                    sge.info=sge.info, list.perms=list.perms)
   
   # Eventually remove calling of different functions for SGE vs not
