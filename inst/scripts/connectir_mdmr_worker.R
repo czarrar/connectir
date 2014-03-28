@@ -21,6 +21,7 @@ option_list <- list(
     make_option(c("-d", "--debug"), action="store_true", default=FALSE, help="Like verbose but will also print more helpful error messages when --forks is >1"), 
     make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print extra output [default]"),
     make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"), 
+    make_option(c("--skip-subdist-check"), action="store_false", default=TRUE, dest="check_subdist", help="Skips checking subject distances folder"), 
     make_option("--voxs", type="character", default=NULL, help="A range of voxels to examine (this is mainly for testing purposes) and can be '1:10'."), 
     make_option("--ignoreprocerror", action="store_true", default=FALSE, help="Ignores the error generated if you specify the # of forks/threads to be greater than the actual number of estimated processes.")
 )
@@ -72,7 +73,8 @@ tryCatch({
   # check paths exist
   ## indir
   opts$indir <- abspath(opts$indir)
-  invisible(check_subdist(opts$indir))
+  if (opts$check_subdist)
+      invisible(check_subdist(opts$indir))
   ## subdist
   if (is.null(opts$subdist))
       opts$subdist <- file.path(opts$indir, "subdist_gower.desc")
