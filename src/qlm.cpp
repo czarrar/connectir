@@ -4,8 +4,7 @@
 SEXP big_qlm_rank(SEXP Xr) {    
     try {
         BM_TO_ARMA_ONCE(Xr, X)
-        using namespace arma;
-        return Rcpp::wrap(rank(X));
+        return Rcpp::wrap(arma::rank(X));
     } catch(std::exception &ex) {
         forward_exception_to_r(ex);
     } catch(...) {
