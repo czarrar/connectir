@@ -27,7 +27,10 @@ else
   echo "Other:" `uname`
 fi
 
-LIBS="${LIBS} -L${R_HOME}/lib -lRlapack"
+#lapack=$(${R_HOME}/bin/R CMD config LAPACK_LIBS)
+#blas=$(${R_HOME}/bin/R CMD config BLAS_LIBS)
+#LIBS="${LIBS} -L${R_HOME}/lib ${lapack} ${blas}"
+LIBS="${LIBS} -L${R_HOME}/lib"
 
 echo "${FLAGS}" > src/Makevars
 echo "${LIBS}" >> src/Makevars
