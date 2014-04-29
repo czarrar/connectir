@@ -159,13 +159,23 @@ tryCatch({
   if (opts$overwrite)
       stop("Right now the overwrite function isn't implemented")
   
-  get_mask <- function(infiles, mask=NULL) {
+  # Reads in the data and returns dimensions
+  get_dims <- function(infile) {
+      ftype <- detect_ftypes(infile)
+      if (ftype == "nifti") 
+          ftype <- ifelse(opts$in2d1, "nifti2d", "nifti4d")
+      reader    <- gen_big_reader(ftype, type="double", shared=parallel_forks)
+      dat       <- reader(infile)
+      dim(dat)
+  }
+  
+  get_mask <- function(infile, mask=NULL) {
       if (is.null(mask)) {
-          hdr <- read.nifti.header(infiles[[1]])
-          if (length(hdr$dim) == 2) {
-              nvoxs <- hdr$dim[2]
+          dims <- get_dims(infile)
+          if (length(dims) == 2) {
+              nvoxs <- dims[2]
           } else {
-              nvoxs <- prod(hdr$dim[-length(hdr$dim)])
+              nvoxs <- prod(dims[-length(dims)])
           }
           mask <- rep(TRUE, nvoxs)
       } else {
@@ -175,11 +185,11 @@ tryCatch({
       return(mask)
   }
   
-  mask1 <- get_mask(infiles1, opts$brainmask1)
+  mask1 <- get_mask(infiles1[1], opts$brainmask1)
   if (sum(mask1) == 0) stop("Mask for --brainmask1 is empty")
   
   if (use.set2) {
-      mask2 <- get_mask(infiles2, opts$brainmask2)
+      mask2 <- get_mask(infiles2[1], opts$brainmask2)
       if (sum(mask2) == 0) stop("Mask for --brainmask2 is empty")
   } else {
       mask2 <- NULL
@@ -190,13 +200,13 @@ tryCatch({
   # Set Memory Demands
   ###
   
-  get_tpts <- function(x) {
-      hdr <- read.nifti.header(x)
-      n <- length(hdr$dim)
+  get_tpts <- function(infile) {
+      dims <- get_dims(infile)
+      n <- length(dims)
       if (n == 4) {
-          return(hdr$dim[4])
+          return(dims[4])
       } else if (n == 2) {
-          return(hdr$dim[1])
+          return(dims[1])
       } else {
           vstop("Input functional file '%s' must be 2 or 4 dimensions but is %i dimensional", x, n)
       }
