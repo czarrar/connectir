@@ -121,7 +121,7 @@ tryCatch({
   # formula
   vcat(opts$verbose, "...formula")
   formula <- as.formula(sprintf("~ %s", opts$formula))
-  vars <- as.character(as.list(attr(terms(formula), "variables"))[-1])
+  vars <- as.character(attr(terms(formula), "term.labels"))
   
   # factors2perm
   vcat(opts$verbose, "...factors to permute")
@@ -133,8 +133,8 @@ tryCatch({
       
       for (x in opts$factors2perm) {
           if (!(x %in% vars)) {
-              vstop("Factor to permute '%s' not found in formula (%s)", 
-                    x, paste(vars, collapse=", "))
+            vstop("Factor to permute '%s' not found in formula (%s)", 
+                  x, paste(vars, collapse=", "))
           }
       }
       
