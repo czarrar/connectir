@@ -155,6 +155,7 @@ tryCatch({
         if (is.null(model[[v]])) {
           vstop("Factor '%s' doesn't match any column in model file (%s)", 
                 v, paste(colnames(model), collapse=", "))
+        }
       } else {
         if (is.null(model[[check_interaction[1]]])) {
             vstop("Factor '%s' doesn't match any column in model file (%s)", 
