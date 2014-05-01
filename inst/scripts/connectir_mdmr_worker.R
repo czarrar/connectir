@@ -150,9 +150,20 @@ tryCatch({
   if (nrow(model) != nsubs)
       stop("# of rows in model file don't match # of subjects in distance matrix")
   for (v in vars) {
-      if (is.null(model[[v]])) {
+      check_interaction <- strsplit(":", v)[[1]]
+      if (length(check_interaction) == 1) {
+        if (is.null(model[[v]])) {
           vstop("Factor '%s' doesn't match any column in model file (%s)", 
                 v, paste(colnames(model), collapse=", "))
+      } else {
+        if (is.null(model[[check_interaction[1]]])) {
+            vstop("Factor '%s' doesn't match any column in model file (%s)", 
+                    check_interaction[1], paste(colnames(model), collapse=", "))
+        }
+        if (is.null(model[[check_interaction[2]]])) {
+            vstop("Factor '%s' doesn't match any column in model file (%s)", 
+                    check_interaction[2], paste(colnames(model), collapse=", "))
+        }
       }
   }
   
