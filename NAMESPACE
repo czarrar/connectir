@@ -1,5 +1,6 @@
 import(methods)
 import(bigmemory, bigmemory.sri, BH)
 import(bigextensions)
+import(bigalgebra)
 exportPattern("^[^\\.]")
 useDynLib(connectir)
