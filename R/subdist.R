@@ -41,6 +41,16 @@ check_gmat <- function(gmat) {
         stop("All zeros in gower's centered distance matrix")
 }
 
+# Does a quick check that all distances for each voxel ran
+# Input could be gower centered matrices or subject distances
+check_all_dists <- function(dists) {
+    n       <- ncol(dists)
+    slice   <- dists[2,]
+    nbad    <- sum(is.na(slice))
+    if (nbad > 0)
+        mystop("%i distance matrices seem to have not been run (i.e., have NAs)", nbad)
+}
+
 # This checks that everything in folder is good
 check_subdist <- function(sdir) {
     library(tools)
@@ -223,11 +233,11 @@ create_subdist <- function(outdir, inlist1, inlist2, opts, ...) {
     vcat(opts$verbose, "...creating file-backed distance matrices")
     nsubs <- length(infiles1)
     nvoxs <- sum(mask1)
-    sdist <- big.matrix(nsubs^2, nvoxs, type="double", 
+    sdist <- big.matrix(nsubs^2, nvoxs, init=NA, type="double", 
                         backingpath=outdir, 
                         backingfile="subdist.bin", 
                         descriptorfile="subdist.desc")
-    gdist <- big.matrix(nsubs^2, nvoxs, type="double", 
+    gdist <- big.matrix(nsubs^2, nvoxs, init=NA, type="double", 
                         backingpath=outdir, 
                         backingfile="subdist_gower.bin", 
                         descriptorfile="subdist_gower.desc")

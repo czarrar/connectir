@@ -316,6 +316,9 @@ tryCatch({
                                         ztransform=opts$ztransform, method=method)
   }
   
+  # Confirm that everything was run
+  check_all_dists(dists_list$sdist)
+  
   #vcat(opts$verbose, "...saving zchecks")  
   #hdr <- read.nifti.header(infiles1[1])
   #if (length(hdr$dim) == 4) {

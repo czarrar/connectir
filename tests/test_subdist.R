@@ -1,4 +1,4 @@
-library(connectir)
+suppressPackageStartupMessages(library(connectir))
 library(testthat)
 library(stringr)
 library(glasso)
@@ -34,12 +34,19 @@ test_that("creation of gower matrix works", {
         A <- -1*(dmat^2)/2
         as.vector(A %*% adj)
     })
-    
+        
     G <- big.matrix(nrow(dat$bm), ncol(dat$bm), type="double", shared=FALSE)
     nc <- ncol(dat$bm)
     comp <- .Call("big_gower", dat$bm, G, as.double(1), as.double(nc), 
                   as.double(1), as.double(nc), PACKAGE="connectir")
     expect_that(ref, is_equivalent_to(as.matrix(G)))
+    
+    #ref2 <- apply(dat$m, 2, function(x) {
+    #    dmat <- matrix(x, n, n)
+    #    A <- -1*(dmat^2)/2
+    #    A
+    #})
+    #expect_that(ref2, is_equivalent_to(as.matrix(G)))
 })
 
 test_that("combining subject cormaps works", {

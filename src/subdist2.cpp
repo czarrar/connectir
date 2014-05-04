@@ -203,7 +203,7 @@ SEXP big_gower(SEXP SX, SEXP SY,
         const double* old_Xptr = sub_sbm_to_arma_xd(SX, X, SX_firstCol, SX_lastCol);
         arma::mat Y(1,1);
         const double* old_Yptr = sub_sbm_to_arma_xd(SY, Y, SY_firstCol, SY_lastCol);
-                
+        
         if (X.n_rows != Y.n_rows || X.n_cols != Y.n_cols)
             Rf_error("dimension mismatch between input and output matrices");
         index_type n = static_cast<index_type>(sqrt(
@@ -220,17 +220,14 @@ SEXP big_gower(SEXP SX, SEXP SY,
         Y = arma::pow(X, 2)/(-2);
         
         // G = A %*% adj
-        mat Y_vox(n,n);
-        const double *old_ptr = Y_vox.memptr();
         for (index_type i = 0; i < Y.n_cols; ++i)
         {
-            arma::access::rw(Y_vox.mem) = Y.colptr(i);
-            Y_vox = Y_vox * adj;
+            mat Y_vox(Y.colptr(i), n, n, false);
+            Y_vox = Y_vox * adj;            
         }
         
         free_arma(X, old_Xptr);
         free_arma(Y, old_Yptr);
-        arma::access::rw(Y_vox.mem) = old_ptr;
         
         return Rcpp::wrap( SY ); // or return R_NilValue?
     } catch(std::exception &ex) {

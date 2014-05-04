@@ -211,6 +211,7 @@ tryCatch({
   vcat(opts$verbose, "...checking input")
   tmp <- matrix(xdist[,1], nsubs, nsubs)
   check_gmat(tmp)
+  check_all_dists(xdist)
   rm(tmp); invisible(gc(FALSE, TRUE))
   
   
