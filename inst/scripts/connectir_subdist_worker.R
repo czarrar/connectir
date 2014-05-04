@@ -317,7 +317,9 @@ tryCatch({
   }
   
   # Confirm that everything was run
-  check_all_dists(dists_list$sdist)
+  vcat(opts$verbose, "Final check")
+  sdist <- attach.big.matrix(file.path(outdir, "subdist.desc"))
+  check_all_dists(sdist)
   
   #vcat(opts$verbose, "...saving zchecks")  
   #hdr <- read.nifti.header(infiles1[1])
