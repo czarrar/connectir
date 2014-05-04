@@ -162,11 +162,15 @@ tryCatch({
   # Reads in the data and returns dimensions
   get_dims <- function(infile) {
       ftype <- detect_ftypes(infile)
-      if (ftype == "nifti") 
-          ftype <- ifelse(opts$in2d1, "nifti2d", "nifti4d")
-      reader    <- gen_big_reader(ftype, type="double", shared=parallel_forks)
-      dat       <- reader(infile)
-      dim(dat)
+      if (ftype == "nifti") {
+          hdr       <- read.nifti.header(infile)
+          return(hdr$dim)
+      } else {
+          # TODO: only read one of the files, not everyone
+          reader    <- gen_big_reader(ftype, type="double", shared=parallel_forks)
+          dat       <- reader(infile)
+          return(dim(dat))
+      }
   }
   
   get_mask <- function(infile, mask=NULL) {
