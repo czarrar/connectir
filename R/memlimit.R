@@ -4,7 +4,7 @@ gb2n <- function(x) x/8*1024^3
 n2mb <- function(x) x*8/1024^2
 mb2n <- function(x) x/8*1024^2
 
-# opts => list(blocksize=0, memlimit=6, verbose=TRUE)
+# opts => list(blocksize=0, superblocksize=0, memlimit=6, verbose=TRUE)
 # return opts
 get_subdist_memlimit <- function(opts, nsubs, nvoxs, subs.ntpts, nvoxs2=NULL, 
                                  nforks=NULL) 
@@ -112,8 +112,11 @@ get_subdist_memlimit <- function(opts, nsubs, nvoxs, subs.ntpts, nvoxs2=NULL,
         opts$blocksize <- floor(opts$blocksize/nforks)
         vcat(opts$verbose, "...adjusting block size to %i based on %i forks", 
              opts$blocksize, nforks)
+        if (opts$blocksize == 0) {
+            stop("...too many forks, consider lowering!")
+        }
     }
-
+    
     # checks
     if (opts$blocksize < 1)
         stop("block size must be greater than 1 and less then # of voxels")
