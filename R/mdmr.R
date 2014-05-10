@@ -333,7 +333,7 @@ save_mdmr <- function(obj, voxs, sdir, mdir, verbose=TRUE) {
     save_mdmr.permutations(mdir, obj$perms, factor.names)
     
     vcat(verbose, "...saving p-value and z-stat map(s)")
-    save_mdmr.pvals_and_zstats(sdir, mdir, obj$pvals, voxs, factor.names)
+    save_mdmr.pvals_and_zstats(sdir, mdir, obj$pvals, voxs, factor.names, obj$ns$nperms)
     
     return(NULL)
 }
@@ -408,32 +408,77 @@ save_mdmr.permutations <- function(mdir, list.perms, factor.names)
     }
 }
 
-save_mdmr.pvals_and_zstats <- function(sdir, mdir, Pvals, voxs, factor.names)
+save_mdmr.pvals_and_zstats <- function(sdir, mdir, Pvals, voxs, factor.names, nperms)
 {
-    maskfile <- file.path(sdir, "mask.nii.gz")
-    mask <- read.mask(maskfile)
-    hdr <- read.nifti.header(maskfile)
-
-    nfactors <- ncol(Pvals)
-    nvoxs <- nrow(Pvals)
+    library(tools) # for file_ext
+    
+    pval_to_zval <- function(pvals) {
+        zvals <- qt(pvals, Inf, lower.tail=FALSE)
+        
+        # Since a p-value of 1, gives an infinite z-stat
+        # then we can adjust the input p-value to be nperms/(nperms+1)
+        inf_zvals <- is.infinite(zvals)
+        if (any(inf_zvals))
+            cat(sum(inf_zvals), "infinite z-value(s) found\n, setting to nperms/(nperms+1)\n")
+        zvals[inf_zvals] <- nperms/(nperms+1)
+        return(zvals)
+    }
+    
+       
+    nfactors    <- ncol(Pvals)
+    nvoxs       <- nrow(Pvals)
     
     if (nfactors != length(factor.names))
         stop("Number of columns in Pvals must match length of factor.names")
     if (nvoxs != length(voxs))
         stop("Number of rows in Pvals must match length of voxs")
     
-    for (i in 1:nfactors) {
-        ofile1 <- file.path(mdir, sprintf("one_minus_pvals_%s.nii.gz", 
-                                         factor.names[[i]]))
-        ps <- vector("numeric", sum(mask))
-        ps[voxs] <- 1 - Pvals[,i]
-        write.nifti(ps, hdr, mask, outfile=ofile1, odt="float")
+    
+    maskpattern <- file.path(sdir, "mask.*")
+    maskfile    <- Sys.glob(maskpattern)
+    if (length(maskfile) == 0) 
+        stop("Could not find mask file in ", maskpattern)
+    ftype       <- detect_ftypes(maskfile)
+    
+    if (ftype == "nifti") {
+        mask    <- read.mask(maskfile)
+        hdr     <- read.nifti.header(maskfile)
         
-        ofile2 <- file.path(mdir, sprintf("zstats_%s.nii.gz", 
-                                         factor.names[[i]]))
-        zs <- vector("numeric", sum(mask))
-        zs[voxs] <- qt(Pvals[,i], Inf, lower.tail=FALSE)
-        write.nifti(zs, hdr, mask, outfile=ofile2, odt="float")
+        for (i in 1:nfactors) {
+            ofile1 <- file.path(mdir, sprintf("one_minus_pvals_%s.nii.gz", 
+                                             factor.names[[i]]))
+            ps <- vector("numeric", sum(mask))
+            ps[voxs] <- 1 - Pvals[,i]
+            write.nifti(ps, hdr, mask, outfile=ofile1, odt="float")
+        
+            ofile2 <- file.path(mdir, sprintf("zstats_%s.nii.gz", 
+                                             factor.names[[i]]))
+            zs <- vector("numeric", sum(mask))
+            zs[voxs] <- pval_to_zval(Pvals[,i])
+            write.nifti(zs, hdr, mask, outfile=ofile2, odt="float")
+        }
+    } else if (ftype == "space"){
+        # TODO: in future support writing of voxelwise data
+        mask    <- as.logical(read.table(maskfile)[,])
+        
+        unmask_data <- function(x_masked) {
+            x   <- vector("numeric", length=length(mask))
+            x[mask][voxs] <- x_masked
+            return(x)
+        }
+        
+        for (i in 1:nfactors) {
+            ofile1 <- file.path(mdir, sprintf("one_minus_pvals_%s.txt", 
+                                             factor.names[[i]]))
+            ps <- unmask_data(1 - Pvals[,i])
+            write.table(ps, file=ofile1, row.names=F, col.names=F, quote=F)
+        
+            ofile2 <- file.path(mdir, sprintf("zstats_%s.txt", 
+                                             factor.names[[i]]))
+            zs <- pval_to_zval(Pvals[,i])
+            zs <- unmask_data(zs)
+            write.table(zs, file=ofile2, row.names=F, col.names=F, quote=F)
+        }
     }
 }
 
