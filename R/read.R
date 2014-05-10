@@ -1,9 +1,11 @@
 # Wrapper read functions
 read.big.tab <- function(file, ...) read.big.matrix(file, sep='\t', ...)
 
-read.big.space <- function(file, ...) read.big.matrix(file, sep=' ', ...)
+#read.big.space <- function(file, ...) read.big.matrix(file, sep=' ', ...)
+read.big.space <- function(file, ...) as.big.matrix(as.matrix(read.table(file, sep=' ', ...)[,]))
 
-read.big.csv <- function(file, ...) read.big.matrix(file, sep=',', ...)
+#read.big.csv <- function(file, ...) read.big.matrix(file, sep=',', ...)
+read.big.csv <- function(file, ...) as.big.matrix(as.matrix(read.csv(file, sep=',', ...)[,]))
 
 read.big.matlab <- function(file, ...) {
     library(R.matlab)
