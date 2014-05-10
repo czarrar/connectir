@@ -5,7 +5,7 @@ suppressPackageStartupMessages(library("optparse"))
 option_list <- list(
     make_option(c("-a", "--amat"), type="character", default=NULL, help="First file-backed big matrix such as the subject distances (use the *.desc extension) (required)", metavar="file"),
     make_option(c("-b", "--bmat"), type="character", default=NULL, help="Second file-backed big matrix (use the *desc extension) (required)", metavar="file"),
-    make_option(c("-c", "--forks"), type="integer", default=1, help="Number of computer processors to use in parallel by forking the complete processing stream [default: %default]", metavar="number"),
+    make_option(c("-p", "--forks"), type="integer", default=1, help="Number of computer processors to use in parallel by forking the complete processing stream [default: %default]", metavar="number"),
     make_option(c("-t", "--threads"), type="integer", default=1, help="Number of computer processors to use in parallel by multi-threading matrix algebra operations [default: %default]", metavar="number"),
     make_option("--blocksize", type="integer", default=0, dest="blocksize", help="How many sets of columns or voxels should used in each iteration of computing the element-wise average (0 = auto) [default: %default]", metavar="number"),
     make_option("--memlimit", type="double", default=4, dest="memlimit", help="If blocksize is set to auto (--blocksize=0), then will set the blocksize to use a maximum of RAM specified by this option  [default: %default]", metavar="number"),
@@ -16,7 +16,7 @@ option_list <- list(
 )
 
 # Make class/usage
-parser <- OptionParser(usage = "%prog [options] outprefix (extension should not exist for outprefix)", 
+parser <- OptionParser(usage = "%prog [options] outprefix (extension should not exist for outprefix)\nWill do a-b=c where c is the output", 
                        option_list=option_list, 
                        add_help_option=TRUE)
 
@@ -106,20 +106,61 @@ tryCatch({
   ###
   
   vcat(opts$verbose, "Setup outputs")
-  
-  omat <- big.matrix(nr, nc, type=type, init=0, 
-                     backingfile=paste(outprefix, ".bin", sep=""), 
-                     descriptorfile=paste(outprefix, ".desc", sep=""),
+  cmat <- big.matrix(nr, nc, type=type, init=NA, 
+                     backingfile=paste(basename(outprefix), "_subdist.bin", sep=""), 
+                     descriptorfile=paste(basename(outprefix), "_subdist.desc", sep=""),
+                     backingpath=dirname(outprefix))  
+  gmat <- big.matrix(nr, nc, type=type, init=NA, 
+                     backingfile=paste(basename(outprefix), "_subdist_gower.bin", sep=""), 
+                     descriptorfile=paste(basename(outprefix), "_subdist_gower.desc", sep=""),
                      backingpath=dirname(outprefix))
   
   ###
-  # Average / Save
+  # Subtract / Save
   ###
-  vcat(opts$verbose, "Averaging")
+  vcat(opts$verbose, "Subtracting")
   
-  daxpy(ALPHA=0.5, X=amat, Y=omat)
-  daxpy(ALPHA=0.5, X=bmat, Y=omat)
+  # TODO: automatically determine this based on the memory
+  blocksize	<- ifelse(nc < 2500, nc, 2500)
+  blocks	<- niftir.split.indices(1, nc, by=blocksize)
+  
+  for (i in 1:blocks$n) {
+      vcat(opts$verbose, "block %i/%i", i, blocks$n)
       
+      firstCol <- blocks$start[i]; lastCol <- blocks$ends[i]
+	  
+	  # Get subsets of inputs and outputs
+	  vcat(opts$verbose, "...subset of big matrices")
+      sub_amat <- sub.big.matrix(amat, firstCol=firstCol, lastCol=lastCol, 
+                                 backingpath=dirname(opts$amat))
+      sub_bmat <- sub.big.matrix(bmat, firstCol=firstCol, lastCol=lastCol, 
+                                 backingpath=dirname(opts$bmat))
+      sub_cmat <- sub.big.matrix(cmat, firstCol=firstCol, lastCol=lastCol, 
+                                 backingpath=dirname(outprefix))
+	  
+	  # Do the subtraction
+	  vcat(opts$verbose, "...subtracting a minus b")
+	  sub_cmat[,] <- sub_amat[,] - sub_bmat[,]
+	  
+      # Gower centered matrices
+      vcat(opts$verbose, "...gower centering")
+      sub_gmat	<- sub.big.matrix(gmat, firstCol=firstCol, lastCol=lastCol, 
+                                  backingpath=dirname(outprefix))
+      gower.subdist2(sub_cmat, outmat=sub_gmat, verbose=verbosity, parallel=parallel_forks)
+	  
+	  # Ensure everything was written to the disk
+	  vcat(opts$verbose, "...flushing to disk (just in case)")
+	  flush(sub_cmat); flush(cmat)
+      flush(sub_gmat); flush(gmat)
+	  
+	  # Free up the memory
+	  vcat(opts$verbose, "...freeing memory")
+	  rm(sub_amat); rm(sub_bmat); rm(sub_cmat); rm(sub_gmat); gc(FALSE, TRUE)
+      amat <- free.memory(amat, dirname(opts$amat))
+      bmat <- free.memory(bmat, dirname(opts$bmat))
+      cmat <- free.memory(cmat, dirname(outprefix))
+      gmat <- free.memory(gmat, dirname(outprefix))
+  }  
 }, warning = function(ex) {
   cat("\nA warning was detected: \n")
   cat(ex$message, "\n\n")
