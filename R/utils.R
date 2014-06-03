@@ -27,7 +27,8 @@ set_parallel_procs <- function(nforks=1, nthreads=1, verbose=FALSE, force=FALSE)
         msg <- sprintf("# of forks %i is greater than the actual # of processors (%i)", 
                           nforks, nprocs)
         if (force == TRUE) {
-            warning(msg, immediate.=TRUE)
+            #warning(msg, immediate.=TRUE)
+            vcat(T, msg)
         } else {
             vstop(msg)
         }
@@ -42,6 +43,7 @@ set_parallel_procs <- function(nforks=1, nthreads=1, verbose=FALSE, force=FALSE)
                           nthreads, nprocs)
         if (force == TRUE) {
           warning(msg, immediate.=TRUE)
+          vcat(T, msg)
         } else {
           vstop(msg)
         }
