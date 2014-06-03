@@ -20,6 +20,7 @@ option_list <- list(
     make_option("--method", type="character", default="pearson", help="Select the distance function applied to compare subject connectivity maps. Options include pearson, spearman, kendall, concordance, euclidean, chebyshev, mahalanobis, pearson_shrink, and icov."), 
     make_option("--overwrite", action="store_true", default=FALSE, help="Overwrite output that already exists (default is not to overwrite already existing output)"),
     make_option("--no-link-functionals", action="store_true", default=FALSE, help="Will not create soft links to each of the functional images with the subdist directory"),
+    make_option("--ignoreprocerror", action="store_true", default=FALSE, help="Ignores the error generated if you specify the # of forks/threads to be greater than the actual number of estimated processes."), 
     make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"), 
     make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print extra output [default]"),
     make_option(c("-d", "--debug"), action="store_true", default=FALSE, help="Like verbose but will also print more helpful error messages when --forks is >1")
@@ -46,7 +47,7 @@ tryCatch({
   suppressWarnings(suppressPackageStartupMessages(library("connectir")))
 
   # parallel processing setup
-  set_parallel_procs(opts$forks, opts$threads, opts$verbose)  
+  set_parallel_procs(opts$forks, opts$threads, opts$verbose, opts$ignoreprocerror)  
   # use foreach parallelization and shared memory?
   parallel_forks <- ifelse(opts$forks == 1, FALSE, TRUE)
 
