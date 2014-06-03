@@ -59,22 +59,31 @@ detect_ftypes <- function(fnames, force.type=NULL, verbose=TRUE) {
         formats = c("nifti", "nifti", "nifti", "nifti", 
                     "matlab", "space", "space", "tab", "csv")
     )
+    df$find <- sub("\\.", "\\\\.", df$extensions)
+    df$find <- paste(df$find, "$", sep="")
     
     if (!is.null(force.type) && !(force.type %in% df$formats))
         stop("unrecognized file type ", force.type)
     
     formats <- sapply(fnames, function(fname) {
-        find <- sapply(df$extensions, function(ext) grepl(ext, fname))
+        find <- sapply(df$find, function(ext) grepl(ext, fname))
         if (any(find))
             return(as.character(df$formats[find]))
         else if (is.null(force.type))
             stop("unrecognized extension in ", fname)
     })
     
-    if (any(formats != formats[1]))
-        warning("not all extensions are ", formats[1], " like in ", fnames[1], immediate.=TRUE)
-    if (!is.null(force.type) && any(formats != force.type))
+    if (any(formats != formats[1])) {
+        pick1 <- which(formats != formats[1])[1]
+        line1 <- paste("not all extensions are ", formats[1], " like in ", fnames[1], "\n")
+        line2 <- paste("including ", fnames[pick1], " found as ", formats[pick1], collapse=", ")
+        warning(line1, line2, immediate.=TRUE)
+    }
+    if (!is.null(force.type) && any(formats != force.type)) {
+        pick1 <- which(formats != force.type)[1]
         vcat(verbose, "not all extensions are the same as the forced one ", force.type)
+        vcat(verbose, "including ", fnames[pick1], " found as ", formats[pick1], collapse=", ")
+    }
     
     ftype <- ifelse(is.null(force.type), formats[1], force.type)
     
