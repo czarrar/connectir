@@ -50,13 +50,13 @@ subdist.memory_limit <- function(memlimit, blocksize, superblocksize,
                                  nforks=NULL)
 {
     vcat(verbose, "Determining memory limit/reqs")
-    
-    if (inlist1$nsubs != inlist2$nubs)
-        stop("1st and 2nd set of functional data have different # of subjects")
-    
+        
     ntpts1 <- get_funclist_tpts(inlist1)
     
     if (!is.null(inlist2)) {
+        if (inlist1$nsubs != inlist2$nubs)
+            stop("1st and 2nd set of functional data have different # of subjects")
+        
         ntpts2 <- get_funclist_tpts(inlist2)
         if (!all(ntpts1 == ntpts2)) {
             bad_subs <- which(ntpts1 != ntpts)
