@@ -164,7 +164,7 @@ tryCatch({
   if (is.null(infiles2))
       inlist2 <- NULL
   else
-      inlist2 <- subdist.prepare_and_mask_funcs(infiles2, opts$verbose, automask=opts$automask2, group.mask=opts$brainmask2))
+      inlist2 <- subdist.prepare_and_mask_funcs(infiles2, opts$verbose, automask=opts$automask2, group.mask=opts$brainmask2)
   
   #vcat(opts$verbose, "Setting up masks")
   #
