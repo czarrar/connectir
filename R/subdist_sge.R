@@ -38,8 +38,8 @@ subdist.prepare_and_mask_funcs <- function(func_files, verbose=TRUE, ...)
     inlist <- load_funcs.prepare(func_files, verbose)
     inlist <- load_funcs.mask(inlist, verbose=verbose, ...)
     
-    inlist$nsubs <- length(inlist1$files)
-    inlist$nvoxs <- sum(inlist1$mask)
+    inlist$nsubs <- length(inlist$files)
+    inlist$nvoxs <- sum(inlist$mask)
     
     return(inlist)
 }
