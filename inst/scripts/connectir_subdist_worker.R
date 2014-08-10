@@ -156,15 +156,27 @@ tryCatch({
   
   
   ###
+  # Setup Functional Information
+  ###
+  
+  vcat(opts$verbose, "Preparing functional information\n")
+  inlist1 <- subdist.prepare_funcs(infiles1, opts$verbose, type="double", shared=parallel_forks)
+  if (is.null(infiles2)) {
+      inlist2 <- NULL
+  } else {
+      inlist2 <- subdist.prepare_funcs(infiles2, opts$verbose, type="double", shared=parallel_forks)
+  }
+  
+  
+  ###
   # Read/Setup Masks
   ###
   
-  vcat(opts$verbose, "Preparing functional files and brain mask\n")
-  inlist1 <- subdist.prepare_and_mask_funcs(infiles1, opts$verbose, automask=opts$automask1, group.mask=opts$brainmask1)
-  if (is.null(infiles2))
-      inlist2 <- NULL
-  else
-      inlist2 <- subdist.prepare_and_mask_funcs(infiles2, opts$verbose, automask=opts$automask2, group.mask=opts$brainmask2)
+  vcat(opts$verbose, "Preparing functional information\n")
+  subdist.prepare_mask(inlist1, opts$verbose, automask=opts$automask1, group.mask=opts$brainmask1)
+  if (!is.null(inlist2)) {
+      inlist2 <- subdist.prepare_mask(inlist2, opts$verbose, automask=opts$automask2, group.mask=opts$brainmask2)
+  }
   
   #vcat(opts$verbose, "Setting up masks")
   #
@@ -251,22 +263,7 @@ tryCatch({
   #} else {
   #    nvoxs2 <- NULL
   #}
-  #opts <- get_subdist_memlimit(opts, nsubs, nvoxs1, ntpts1, nvoxs2)
-  
-  
-  ###
-  # Check input functionals
-  ###
-  
-  vcat(opts$verbose, "Checking input functionals (1)")
-  subdist.check_funcs(inlist1, opts$verbose, extra_checks=TRUE, 
-                      parallel=parallel_forks)
-  if (!is.null(inlist2)) {
-      vcat(opts$verbose, "Checking input functionals (2)")
-      subdist.check_funcs(inlist2, opts$verbose, extra_checks=opts$extra_checks, 
-                          parallel=parallel_forks)
-  }
-  
+  #opts <- get_subdist_memlimit(opts, nsubs, nvoxs1, ntpts1, nvoxs2)  
   
   ###
   # Create output directory
@@ -282,8 +279,7 @@ tryCatch({
   
   vcat(opts$verbose, "Loading and masking functional data (Part 1)")
   inlist1 <- load_funcs.read_and_scale(inlist1, opts$verbose, to.copy=FALSE, 
-                                       parallel=parallel, scale=!glasso, 
-                                       type="double", shared=parallel_forks)
+                                       parallel=parallel, scale=!glasso)
   #ftype1 <- detect_ftypes(infiles1)
   #if (ftype1 == "nifti") 
   #    ftype1 <- ifelse(opts$in2d1, "nifti2d", "nifti4d")
@@ -306,8 +302,7 @@ tryCatch({
   if (!is.null(inlist2)) {
       vcat(opts$verbose, "Loading and masking functional data (Part 2)")
       inlist2 <- load_funcs.read_and_scale(inlist2, opts$verbose, to.copy=FALSE, 
-                                           parallel=parallel, scale=!glasso, 
-                                           type="double", shared=parallel_forks)
+                                           parallel=parallel, scale=!glasso)
   }
   #if (use.set2) {
   #    vcat(opts$verbose, "Loading and masking functional data (Part 2)")
@@ -334,6 +329,20 @@ tryCatch({
   #inlist2 <- list(files=infiles2, ftype=ftype2, mask=mask2)
   #
   #invisible(gc(FALSE, TRUE))
+  
+  
+  ###
+  # Check input functionals
+  ###
+  
+  vcat(opts$verbose, "Checking input functionals (1)")
+  subdist.check_funcs(inlist1, opts$verbose, extra_checks=TRUE, 
+                      parallel=parallel_forks)
+  if (!is.null(inlist2)) {
+      vcat(opts$verbose, "Checking input functionals (2)")
+      subdist.check_funcs(inlist2, opts$verbose, extra_checks=opts$extra_checks, 
+                          parallel=parallel_forks)
+  }
   
   
   ###

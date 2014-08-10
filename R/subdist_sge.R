@@ -31,11 +31,24 @@ subdist.read_regressors <- function(fpath, formula=NULL, verbose=TRUE)
     return(rhs)
 }
 
-subdist.prepare_and_mask_funcs <- function(func_files, verbose=TRUE, ...)
+subdist.prepare_funcs <- function(func_files, verbose=TRUE, ...) {
+    vcat(verbose, "Preparing functionals")
+    inlist <- load_funcs.prepare(func_files, verbose, ...)
+    inlist$nsubs <- length(inlist$files)
+    return(inlist)
+}
+
+subdist.prepare_mask <- function(inlist, verbose=TRUE, ...) {
+    inlist <- load_funcs.mask(inlist, verbose=verbose, ...)
+    inlist$nvoxs <- sum(inlist$mask)
+    return(inlist)
+}
+
+subdist.prepare_and_mask_funcs <- function(func_files, verbose=TRUE, type="double", ...)
 {
     vcat(verbose, "Preparing and masking functionals")
     
-    inlist <- load_funcs.prepare(func_files, verbose)
+    inlist <- load_funcs.prepare(func_files, verbose, type)
     inlist <- load_funcs.mask(inlist, verbose=verbose, ...)
     
     inlist$nsubs <- length(inlist$files)

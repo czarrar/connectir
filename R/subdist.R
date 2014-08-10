@@ -188,9 +188,12 @@ create_subdist <- function(outdir, inlist1, inlist2, opts, ...) {
             outfile <- file.path(outdir, "mask.txt")
             write.table(inlist1$mask, file=outfile, row.names=F, col.names=F)
         } else {
+            cat("s\n")
             hdr$dim <- hdr$dim[1:3]; hdr$pixdim <- hdr$pixdim[1:3]
+            save(inlist1, hdr, file="ztmp.rda")
             outfile <- file.path(outdir, "mask.nii.gz")
             write.nifti(inlist1$mask, hdr, outfile=outfile, odt="char")
+            cat("s2\n")
         }
     } else if (inlist1$ftype %in% c("space", "tab", "csv")) {
         outfile <- file.path(outdir, "mask.txt")
@@ -231,8 +234,8 @@ create_subdist <- function(outdir, inlist1, inlist2, opts, ...) {
     
     # Create file-backed subject distances and gower matrices
     vcat(opts$verbose, "...creating file-backed distance matrices")
-    nsubs <- length(infiles1)
-    nvoxs <- sum(mask1)
+    nsubs <- length(inlist1$files)
+    nvoxs <- sum(inlist1$mask)
     sdist <- big.matrix(nsubs^2, nvoxs, init=NA, type="double", 
                         backingpath=outdir, 
                         backingfile="subdist.bin", 
