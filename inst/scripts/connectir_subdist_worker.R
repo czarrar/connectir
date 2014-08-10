@@ -259,11 +259,11 @@ tryCatch({
   ###
   
   vcat(opts$verbose, "Checking input functionals (1)")
-  subdist.check_funcs(inlist1, opts$verbose, verbose, extra_checks=TRUE, 
+  subdist.check_funcs(inlist1, opts$verbose, extra_checks=TRUE, 
                       parallel=parallel_forks)
   if (!is.null(inlist2)) {
       vcat(opts$verbose, "Checking input functionals (2)")
-      subdist.check_funcs(inlist2, verbose, extra_checks=opts$extra_checks, 
+      subdist.check_funcs(inlist2, opts$verbose, extra_checks=opts$extra_checks, 
                           parallel=parallel_forks)
   }
   
@@ -281,7 +281,7 @@ tryCatch({
   ###
   
   vcat(opts$verbose, "Loading and masking functional data (Part 1)")
-  inlist1 <- load_funcs.read_and_scale(inlist1, verbose, to.copy=FALSE, 
+  inlist1 <- load_funcs.read_and_scale(inlist1, opts$verbose, to.copy=FALSE, 
                                        parallel=parallel, scale=!glasso, 
                                        type="double", shared=parallel_forks)
   #ftype1 <- detect_ftypes(infiles1)
@@ -305,7 +305,7 @@ tryCatch({
   
   if (!is.null(inlist2)) {
       vcat(opts$verbose, "Loading and masking functional data (Part 2)")
-      inlist2 <- load_funcs.read_and_scale(inlist2, verbose, to.copy=FALSE, 
+      inlist2 <- load_funcs.read_and_scale(inlist2, opts$verbose, to.copy=FALSE, 
                                            parallel=parallel, scale=!glasso, 
                                            type="double", shared=parallel_forks)
   }
