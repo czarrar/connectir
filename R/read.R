@@ -127,8 +127,8 @@ mask.auto <- function(file, read_fun, na.rm=FALSE, ...)
     mask != 0
 }
 
-# If automask is false then files are assumed to be 4D or 2D
-# If automask is true then files are assumed to be 3D or 1D
+# If automask is true then files are assumed to be 4D or 2D
+# If automask is false then files are assumed to be 3D or 1D
 overlap_masks <- function(files, automask=FALSE, verbose=TRUE)
 {
     vcat(verbose, "Calculating overlap of masks")

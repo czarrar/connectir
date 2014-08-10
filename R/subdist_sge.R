@@ -97,17 +97,19 @@ subdist.check_funcs <- function(inlist, verbose=TRUE, extra_checks=FALSE,
     }
 }
 
-subdist.create_dists <- function(opts, outdir, inlist1, inlist2=NULL, ...)
+subdist.create_dists <- function(opts, outdir, inlist1, inlist2=NULL, ret.orig=F, ...)
 {
     orig <- create_subdist(outdir, inlist1, inlist2, opts, ...)
     
-    # Only keep the file paths
-    ret <- list(sdist=orig$sdist.fname, gdist=orig$gdist.fname, bpath=orig$bpath)
-    
-    # Remove the actual distance matrices from memory
-    rm(orig); invisible(gc(F,T))
-    
-    return(ret)
+    if (ret.orig) {
+        return(orig)
+    } else {
+        # Only keep the file paths
+        ret <- list(sdist=orig$sdist.fname, gdist=orig$gdist.fname, bpath=orig$bpath)
+        # Remove the actual distance matrices from memory
+        rm(orig); invisible(gc(F,T))
+        return(ret)
+    }
 }
 
 subdist_wrapper <- function(funcfiles1, funcfiles2=NULL, design_mat=NULL, 
