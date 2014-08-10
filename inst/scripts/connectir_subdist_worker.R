@@ -7,7 +7,9 @@ option_list <- list(
     make_option("--in2D1", action="store_true", default=FALSE, dest="in2d1", help="ask"), 
     make_option("--in2D2", action="store_true", default=FALSE, dest="in2d2", help="ask"), 
     make_option("--ztransform", action="store_true", default=FALSE, dest="ztransform", help="Fischer Z-Transform the correlations before calculating the distance between participants"),
-    make_option("--brainmask1", type="character", default=NULL, help="When computing each whole-brain connectivity map, this mask will restrict which parts of the whole-brain are to be considered", metavar="file", dest="brainmask1"),
+    make_option("--automask1", action="store_true", default=FALSE, dest="automask1", help="Auto-generate the group brain mask. It does this by only including voxels that have non-zero variance across all subjects (i.e., 100% overlap mask). You can use this with --brainmask1."), 
+    make_option("--brainmask1", type="character", default=NULL, help="When computing each whole-brain connectivity map, this mask will restrict which parts of the whole-brain are to be considered. You can use this with --automask1.", metavar="file", dest="brainmask1"),
+    make_option("--automask2", action="store_true", default=FALSE, dest="automask2", help="Auto-generate the group brain mask. It does this by only including voxels that have non-zero variance across all subjects for --infuncs2 (i.e., 100% overlap mask). You can use this with --brainmask2."), 
     make_option("--brainmask2", type="character", default=NULL, help="When computing each whole-brain connectivity map, this mask will restrict which parts of the whole-brain are to be considered only for --infuncs2", metavar="file", dest="brainmask2"), 
     make_option("--regress", type="character", default=NULL, help="A design matrix (space delimeted file where first row is a header) containing variables to regress out of each voxel's whole-brain connectivity maps before comparing distances between subjects", metavar="file"),
     make_option("--bg", type="character", default=NULL, help="Background image (e.g., MNI152 standard brain) upon which later results might be overlaid", metavar="file"), 
@@ -20,7 +22,6 @@ option_list <- list(
     make_option("--method", type="character", default="pearson", help="Select the distance function applied to compare subject connectivity maps. Options include pearson, spearman, kendall, concordance, euclidean, chebyshev, mahalanobis, pearson_shrink, and icov."), 
     make_option("--overwrite", action="store_true", default=FALSE, help="Overwrite output that already exists (default is not to overwrite already existing output)"),
     make_option("--no-link-functionals", action="store_true", default=FALSE, help="Will not create soft links to each of the functional images with the subdist directory"),
-    make_option("--ignoreprocerror", action="store_true", default=FALSE, help="Ignores the error generated if you specify the # of forks/threads to be greater than the actual number of estimated processes."), 
     make_option(c("-q", "--quiet"), action="store_false", dest="verbose", help="Print little output"), 
     make_option(c("-v", "--verbose"), action="store_true", default=TRUE, help="Print extra output [default]"),
     make_option(c("-d", "--debug"), action="store_true", default=FALSE, help="Like verbose but will also print more helpful error messages when --forks is >1")
@@ -47,7 +48,7 @@ tryCatch({
   suppressWarnings(suppressPackageStartupMessages(library("connectir")))
 
   # parallel processing setup
-  set_parallel_procs(opts$forks, opts$threads, opts$verbose, opts$ignoreprocerror)  
+  set_parallel_procs(opts$forks, opts$threads, opts$verbose)  
   # use foreach parallelization and shared memory?
   parallel_forks <- ifelse(opts$forks == 1, FALSE, TRUE)
 
@@ -138,100 +139,141 @@ tryCatch({
   
   # design matrix
   if (!is.null(opts$regress)) {
-      vcat(opts$verbose, "Reading in design matrix")
-      tmp_fname <- opts$regress
-      tmp <- as.matrix(read.table(opts$regress, header=TRUE))
-      opts$regress <- big.matrix(nrow(tmp), ncol(tmp), type="double", shared=TRUE)
-      opts$regress[,] <- tmp[,]; rm(tmp)
-      k <- qlm_rank(opts$regress)
-      if (k < ncol(opts$regress))
-          vstop("design matrix (--regress %s) is rank deficient", tmp_fname)
-      rm(tmp_fname)
+      cat("Read in design matrix for pre-distance-matrix regression\n")
+      design_mat <- subdist.read_regressors(opts$regress, opts$verbose)
   }
+  #if (!is.null(opts$regress)) {
+  #    vcat(opts$verbose, "Reading in design matrix")
+  #    tmp_fname <- opts$regress
+  #    tmp <- as.matrix(read.table(opts$regress, header=TRUE))
+  #    opts$regress <- big.matrix(nrow(tmp), ncol(tmp), type="double", shared=TRUE)
+  #    opts$regress[,] <- tmp[,]; rm(tmp)
+  #    k <- qlm_rank(opts$regress)
+  #    if (k < ncol(opts$regress))
+  #        vstop("design matrix (--regress %s) is rank deficient", tmp_fname)
+  #    rm(tmp_fname)
+  #}
   
   
   ###
   # Read/Setup Masks
   ###
   
-  vcat(opts$verbose, "Setting up masks")
+  vcat(opts$verbose, "Preparing functional files and brain mask\n")
+  inlist1 <- subdist.prepare_and_mask_funcs(infiles1, opts$verbose, automask=opts$automask1, group.mask=opts$brainmask1)
+  if (is.null(infiles2))
+      inlist2 <- NULL
+  else
+      inlist2 <- subdist.prepare_and_mask_funcs(infiles2, opts$verbose, automask=opts$automask2, group.mask=opts$brainmask2))
   
-  ## remove existing output
-  if (opts$overwrite)
-      stop("Right now the overwrite function isn't implemented")
-  
-  # Reads in the data and returns dimensions
-  get_dims <- function(infile) {
-      ftype <- detect_ftypes(infile)
-      if (ftype == "nifti") {
-          hdr       <- read.nifti.header(infile)
-          return(hdr$dim)
-      } else {
-          # TODO: only read one of the files, not everyone
-          reader    <- gen_big_reader(ftype, type="double", shared=parallel_forks)
-          dat       <- reader(infile)
-          return(dim(dat))
-      }
-  }
-  
-  get_mask <- function(infile, mask=NULL) {
-      if (is.null(mask)) {
-          dims <- get_dims(infile)
-          if (length(dims) == 2) {
-              nvoxs <- dims[2]
-          } else {
-              nvoxs <- prod(dims[-length(dims)])
-          }
-          mask <- rep(TRUE, nvoxs)
-      } else {
-          mask <- read.mask(mask)
-      }
-      
-      return(mask)
-  }
-  
-  mask1 <- get_mask(infiles1[1], opts$brainmask1)
-  if (sum(mask1) == 0) stop("Mask for --brainmask1 is empty")
-  
-  if (use.set2) {
-      mask2 <- get_mask(infiles2[1], opts$brainmask2)
-      if (sum(mask2) == 0) stop("Mask for --brainmask2 is empty")
-  } else {
-      mask2 <- NULL
-  }
+  #vcat(opts$verbose, "Setting up masks")
+  #
+  ### remove existing output
+  #if (opts$overwrite)
+  #    stop("Right now the overwrite function isn't implemented")
+  #
+  ## Reads in the data and returns dimensions
+  #get_dims <- function(infile) {
+  #    ftype <- detect_ftypes(infile)
+  #    if (ftype == "nifti") {
+  #        hdr       <- read.nifti.header(infile)
+  #        return(hdr$dim)
+  #    } else {
+  #        # TODO: only read one of the files, not everyone
+  #        reader    <- gen_big_reader(ftype, type="double", shared=parallel_forks)
+  #        dat       <- reader(infile)
+  #        return(dim(dat))
+  #    }
+  #}
+  #
+  #get_mask <- function(infile, mask=NULL) {
+  #    if (is.null(mask)) {
+  #        dims <- get_dims(infile)
+  #        if (length(dims) == 2) {
+  #            nvoxs <- dims[2]
+  #        } else {
+  #            nvoxs <- prod(dims[-length(dims)])
+  #        }
+  #        mask <- rep(TRUE, nvoxs)
+  #    } else {
+  #        mask <- read.mask(mask)
+  #    }
+  #    
+  #    return(mask)
+  #}
+  #
+  #mask1 <- get_mask(infiles1[1], opts$brainmask1)
+  #if (sum(mask1) == 0) stop("Mask for --brainmask1 is empty")
+  #
+  #if (use.set2) {
+  #    mask2 <- get_mask(infiles2[1], opts$brainmask2)
+  #    if (sum(mask2) == 0) stop("Mask for --brainmask2 is empty")
+  #} else {
+  #    mask2 <- NULL
+  #}
   
   
   ###
   # Set Memory Demands
   ###
   
-  get_tpts <- function(infile) {
-      dims <- get_dims(infile)
-      n <- length(dims)
-      if (n == 4) {
-          return(dims[4])
-      } else if (n == 2) {
-          return(dims[1])
-      } else {
-          vstop("Input functional file '%s' must be 2 or 4 dimensions but is %i dimensional", x, n)
-      }
+  # Check memory limits
+  ###  and Set block sizes
+  l <- subdist.memory_limit(opts$memlimit, opts$blocksize, 0, 
+                            inlist1, inlist2, opts$verbose, opts$forks)
+  opts$blocksize <- l$blocksize
+  opts$superblocksize <- l$superblocksize
+  opts$superblocks <- niftir.split.indices(1, inlist1$nvoxs, by=l$superblocksize)
+  
+  #get_tpts <- function(infile) {
+  #    dims <- get_dims(infile)
+  #    n <- length(dims)
+  #    if (n == 4) {
+  #        return(dims[4])
+  #    } else if (n == 2) {
+  #        return(dims[1])
+  #    } else {
+  #        vstop("Input functional file '%s' must be 2 or 4 dimensions but is %i dimensional", x, n)
+  #    }
+  #}
+  #
+  #nsubs <- length(infiles1)
+  #nvoxs1 <- sum(mask1)
+  #ntpts1 <- sapply(infiles1, get_tpts)
+  #if (use.set2) {
+  #    nvoxs2 <- sum(mask2)
+  #    ntpts2 <- sapply(infiles2, get_tpts)
+  #    for (i in 1:nsubs) {
+  #        if (ntpts1[i] != ntpts2[i]) {
+  #            vstop("subject #%i does not have the same # of timepoints for the first and second functional datasets", i)
+  #        }
+  #    }
+  #} else {
+  #    nvoxs2 <- NULL
+  #}
+  #opts <- get_subdist_memlimit(opts, nsubs, nvoxs1, ntpts1, nvoxs2)
+  
+  
+  ###
+  # Check input functionals
+  ###
+  
+  vcat(opts$verbose, "Checking input functionals (1)")
+  subdist.check_funcs(inlist1, opts$verbose, verbose, extra_checks=TRUE, 
+                      parallel=parallel_forks)
+  if (!is.null(inlist2)) {
+      vcat(opts$verbose, "Checking input functionals (2)")
+      subdist.check_funcs(inlist2, verbose, extra_checks=opts$extra_checks, 
+                          parallel=parallel_forks)
   }
   
-  nsubs <- length(infiles1)
-  nvoxs1 <- sum(mask1)
-  ntpts1 <- sapply(infiles1, get_tpts)
-  if (use.set2) {
-      nvoxs2 <- sum(mask2)
-      ntpts2 <- sapply(infiles2, get_tpts)
-      for (i in 1:nsubs) {
-          if (ntpts1[i] != ntpts2[i]) {
-              vstop("subject #%i does not have the same # of timepoints for the first and second functional datasets", i)
-          }
-      }
-  } else {
-      nvoxs2 <- NULL
-  }
-  opts <- get_subdist_memlimit(opts, nsubs, nvoxs1, ntpts1, nvoxs2)
+  
+  ###
+  # Create output directory
+  ###
+  
+  vcat(opts$verbose, "Creating output directory and files")
+  dists_list <- subdist.create_dists(opts, outdir, inlist1, inlist2, ret.orig=T, shared=parallel_forks)
   
   
   ###
@@ -239,60 +281,69 @@ tryCatch({
   ###
   
   vcat(opts$verbose, "Loading and masking functional data (Part 1)")
-  ftype1 <- detect_ftypes(infiles1)
-  if (ftype1 == "nifti") 
-      ftype1 <- ifelse(opts$in2d1, "nifti2d", "nifti4d")
-  reader1 <- gen_big_reader(ftype1, type="double", shared=parallel_forks)
-  funclist1 <- load_and_mask_func_data2(infiles1, reader1, mask=mask1, 
-                                        verbose=opts$verbose, scale=!glasso,  
-                                        type="double", shared=parallel_forks)
-  check1 <- check_func_data(infiles1[1], funclist1[1], extra=TRUE, 
-                            verbose=opts$verbose, parallel=FALSE)
-  check2 <- check_func_data(infiles1[-1], funclist1[-1], extra=opts$extrachecks, 
-                            verbose=opts$verbose, parallel=parallel_forks)
-  checks <- c(check1, check2)
-  if (any(checks!=0)) {
-      vcat(opts$verbose, "Bad data for following files:")
-      vcat(opts$verbose, paste(infiles1[checks!=0], collapse="\n"))
-      vstop("Quitting due to errors with 1st set of input functional data")
-  }
-  inlist1 <- list(files=infiles1, ftype=ftype1, mask=mask1)
+  inlist1 <- load_funcs.read_and_scale(inlist1, verbose, to.copy=FALSE, 
+                                       parallel=parallel, scale=!glasso, 
+                                       type="double", shared=parallel_forks)
+  #ftype1 <- detect_ftypes(infiles1)
+  #if (ftype1 == "nifti") 
+  #    ftype1 <- ifelse(opts$in2d1, "nifti2d", "nifti4d")
+  #reader1 <- gen_big_reader(ftype1, type="double", shared=parallel_forks)
+  #funclist1 <- load_and_mask_func_data2(infiles1, reader1, mask=mask1, 
+  #                                      verbose=opts$verbose, scale=!glasso,  
+  #                                      type="double", shared=parallel_forks)
+  #check1 <- check_func_data(infiles1[1], funclist1[1], extra=TRUE, 
+  #                          verbose=opts$verbose, parallel=FALSE)
+  #check2 <- check_func_data(infiles1[-1], funclist1[-1], extra=opts$extrachecks, 
+  #                          verbose=opts$verbose, parallel=parallel_forks)
+  #checks <- c(check1, check2)
+  #if (any(checks!=0)) {
+  #    vcat(opts$verbose, "Bad data for following files:")
+  #    vcat(opts$verbose, paste(infiles1[checks!=0], collapse="\n"))
+  #    vstop("Quitting due to errors with 1st set of input functional data")
+  #}
+  #inlist1 <- list(files=infiles1, ftype=ftype1, mask=mask1)
   
-  if (use.set2) {
+  if (!is.null(inlist2)) {
       vcat(opts$verbose, "Loading and masking functional data (Part 2)")
-      ftype2 <- detect_ftypes(infiles2)
-      if (ftype2 == "nifti") 
-          ftype2 <- ifelse(opts$in2d2, "nifti2d", "nifti4d")
-      reader2 <- gen_big_reader(ftype2, type="double", shared=parallel_forks)
-      funclist2 <- load_and_mask_func_data2(infiles2, reader2, mask=mask2, 
-                                            verbose=opts$verbose, scale=!glasso,  
-                                            type="double", shared=parallel_forks)
-      check1 <- check_func_data(infiles2[1], funclist2[1], extra=opts$extrachecks, 
-                                verbose=opts$verbose, parallel=parallel_forks)
-      check2 <- check_func_data(infiles2[-1], funclist2[-1], extra=opts$extrachecks, 
-                                verbose=opts$verbose, parallel=parallel_forks)
-      checks <- c(check1, check2)
-      if (any(checks!=0)) {
-          vcat(opts$verbose, "Bad data for following files:")
-          vcat(opts$verbose, paste(infiles2[checks!=0], collapse="\n"))
-          vstop("Quitting due to errors with 2nd set of input functional data")
-      }
-  } else {
-      ftype2 <- NULL
+      inlist2 <- load_funcs.read_and_scale(inlist2, verbose, to.copy=FALSE, 
+                                           parallel=parallel, scale=!glasso, 
+                                           type="double", shared=parallel_forks)
   }
-  inlist2 <- list(files=infiles2, ftype=ftype2, mask=mask2)
-  
-  invisible(gc(FALSE, TRUE))
+  #if (use.set2) {
+  #    vcat(opts$verbose, "Loading and masking functional data (Part 2)")
+  #    ftype2 <- detect_ftypes(infiles2)
+  #    if (ftype2 == "nifti") 
+  #        ftype2 <- ifelse(opts$in2d2, "nifti2d", "nifti4d")
+  #    reader2 <- gen_big_reader(ftype2, type="double", shared=parallel_forks)
+  #    funclist2 <- load_and_mask_func_data2(infiles2, reader2, mask=mask2, 
+  #                                          verbose=opts$verbose, scale=!glasso,  
+  #                                          type="double", shared=parallel_forks)
+  #    check1 <- check_func_data(infiles2[1], funclist2[1], extra=opts$extrachecks, 
+  #                              verbose=opts$verbose, parallel=parallel_forks)
+  #    check2 <- check_func_data(infiles2[-1], funclist2[-1], extra=opts$extrachecks, 
+  #                              verbose=opts$verbose, parallel=parallel_forks)
+  #    checks <- c(check1, check2)
+  #    if (any(checks!=0)) {
+  #        vcat(opts$verbose, "Bad data for following files:")
+  #        vcat(opts$verbose, paste(infiles2[checks!=0], collapse="\n"))
+  #        vstop("Quitting due to errors with 2nd set of input functional data")
+  #    }
+  #} else {
+  #    ftype2 <- NULL
+  #}
+  #inlist2 <- list(files=infiles2, ftype=ftype2, mask=mask2)
+  #
+  #invisible(gc(FALSE, TRUE))
   
   
   ###
   # Creating output directory
   ###
   
-  vcat(opts$verbose, "Creating output directory and files")
-  dists_list <- create_subdist(outdir, inlist1, inlist2, 
-                               opts, shared=parallel_forks)
-  invisible(gc(FALSE, TRUE))
+  #vcat(opts$verbose, "Creating output directory and files")
+  #dists_list <- create_subdist(outdir, inlist1, inlist2, 
+  #                             opts, shared=parallel_forks)
+  #invisible(gc(FALSE, TRUE))
   
   end.time <- Sys.time()
   vcat(opts$verbose, "Setup is done. It took: %.2f minutes\n", 
