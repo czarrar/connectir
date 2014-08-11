@@ -62,8 +62,8 @@ subdist.memory_limit <- function(memlimit, blocksize, superblocksize,
                                  inlist1, inlist2=NULL, verbose=TRUE, 
                                  nforks=NULL)
 {
-    vcat(verbose, "Determining memory limit/reqs")
-        
+    vcat(verbose, "Memory?")
+    
     ntpts1 <- get_funclist_tpts(inlist1)
     
     if (!is.null(inlist2)) {

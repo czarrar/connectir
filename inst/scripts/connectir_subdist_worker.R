@@ -173,7 +173,7 @@ tryCatch({
   ###
   
   vcat(opts$verbose, "Preparing functional information\n")
-  subdist.prepare_mask(inlist1, opts$verbose, automask=opts$automask1, group.mask=opts$brainmask1)
+  inlist1 <- subdist.prepare_mask(inlist1, opts$verbose, automask=opts$automask1, group.mask=opts$brainmask1)
   if (!is.null(inlist2)) {
       inlist2 <- subdist.prepare_mask(inlist2, opts$verbose, automask=opts$automask2, group.mask=opts$brainmask2)
   }
