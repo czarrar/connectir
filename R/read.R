@@ -42,6 +42,7 @@ gen_big_reader <- function(intype, ...) {
         
         # Read
         args$file <- x
+        args2
         mat <- do.call(sprintf("read.big.%s", intype), args)
         
         gc(FALSE, TRUE)
@@ -317,14 +318,15 @@ load_funcs.read <- function(inlist, verbose=TRUE, ...)
         stop("input argument must be of class inlist")
     progress <- ifelse(verbose, "text", "none")
     
-    inds <- which(inlist$mask)
+    to.mask <- !all(inlist$mask)
     inlist$funcs <- llply(inlist$files, function(f) {
         if (inlist$ftype == "nifti") {
-            func <- inlist$reader(f, voxs=inds, ...)
+            func <- inlist$reader(f, ...)
         } else {
             func <- inlist$reader(f, ...)
-            func <- deepcopy(func, cols=inds)
         }
+        if (to.mask) func <- deepcopy(func, cols=inlist$mask)
+        func
     }, .progress=progress)
     
     return(inlist)
@@ -344,7 +346,7 @@ load_funcs.scale <- function(inlist, verbose=TRUE, to.copy=FALSE,
         inlist$funcs_nonscaled <- inlist$funcs
     
     inlist$funcs <- llply(inlist$funcs, function(func) {
-        scale(func, to.copy=to.copy, ...)
+        scale_fast(func, to.copy=to.copy, ...)
     }, .progress=progress, .parallel=parallel)
     
     invisible(gc(FALSE, TRUE))
