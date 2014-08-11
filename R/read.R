@@ -33,7 +33,7 @@ gen_big_reader <- function(intype, ...) {
         stop("unrecognized input type: ", intype)
     
     args <- list(...)
-    fun <- function(x, ...) {
+    fun <- function(x) {
         # Checks
         if (is.big.matrix(x))
             return(x)
@@ -42,7 +42,6 @@ gen_big_reader <- function(intype, ...) {
         
         # Read
         args$file <- x
-        args2
         mat <- do.call(sprintf("read.big.%s", intype), args)
         
         gc(FALSE, TRUE)
@@ -321,11 +320,11 @@ load_funcs.read <- function(inlist, verbose=TRUE, ...)
     to.mask <- !all(inlist$mask)
     inlist$funcs <- llply(inlist$files, function(f) {
         if (inlist$ftype == "nifti") {
-            func <- inlist$reader(f, ...)
+            func <- inlist$reader(f)
         } else {
-            func <- inlist$reader(f, ...)
+            func <- inlist$reader(f)
         }
-        if (to.mask) func <- deepcopy(func, cols=inlist$mask)
+        if (to.mask) func <- deepcopy(func, cols=inlist$mask, ...)
         func
     }, .progress=progress)
     
@@ -355,17 +354,17 @@ load_funcs.scale <- function(inlist, verbose=TRUE, to.copy=FALSE,
 }
 
 load_funcs.read_and_scale <- function(inlist, verbose=TRUE, to.copy=FALSE, 
-                                      parallel=FALSE, ...)
+                                      parallel=FALSE, scale=TRUE, ...)
 {
     inlist <- load_funcs.read(inlist, verbose, ...)
-    inlist <- load_funcs.scale(inlist, verbose, to.copy, parallel, ...)
+    if (scale) inlist <- load_funcs.scale(inlist, verbose, to.copy, parallel, ...)
     return(inlist)
 }
 
 load_funcs <- function(files, verbose=TRUE, 
                        automask=FALSE, subject.masks=NULL,  
                        group.mask=NULL, detailed=FALSE, 
-                       to.copy=FALSE, parallel=FALSE, type="double"
+                       to.copy=FALSE, parallel=FALSE, type="double", 
                        ...)
 {
     inlist <- load_funcs.prepare(files, verbose, type)

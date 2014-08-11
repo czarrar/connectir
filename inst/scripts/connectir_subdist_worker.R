@@ -270,16 +270,18 @@ tryCatch({
   ###
   
   vcat(opts$verbose, "Creating output directory and files")
-  dists_list <- subdist.create_dists(opts, outdir, inlist1, inlist2, ret.orig=T, shared=parallel_forks)
+  dists_list <- subdist.create_dists(opts, outdir, inlist1, inlist2, ret.orig=T)
   
   
   ###
   # Read/Prepare Functional Data
   ###
   
+  # NOTE: functional data are not read in parallel!
   vcat(opts$verbose, "Loading and masking functional data (Part 1)")
   inlist1 <- load_funcs.read_and_scale(inlist1, opts$verbose, to.copy=FALSE, 
-                                       parallel=parallel, scale=!glasso)
+                                       scale=!glasso, parallel=parallel_forks, 
+                                       type="double", shared=parallel_forks)
   #ftype1 <- detect_ftypes(infiles1)
   #if (ftype1 == "nifti") 
   #    ftype1 <- ifelse(opts$in2d1, "nifti2d", "nifti4d")
@@ -302,7 +304,8 @@ tryCatch({
   if (!is.null(inlist2)) {
       vcat(opts$verbose, "Loading and masking functional data (Part 2)")
       inlist2 <- load_funcs.read_and_scale(inlist2, opts$verbose, to.copy=FALSE, 
-                                           parallel=parallel, scale=!glasso)
+                                           scale=!glasso, parallel=parallel_forks, 
+                                           type="double", shared=parallel_forks)
   }
   #if (use.set2) {
   #    vcat(opts$verbose, "Loading and masking functional data (Part 2)")
