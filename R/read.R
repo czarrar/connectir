@@ -244,7 +244,7 @@ exclude_sub_masks <- function(inmasks, exclude.thresh=0.05, filter.mask=NULL,
 ## Prepares the way forward
 ## 1. What are the type of files?
 ## 2. What is the function to read these files?
-load_funcs.prepare <- function(files, verbose=TRUE, type="double") 
+load_funcs.prepare <- function(files, verbose=TRUE, ...) 
 {
     vcat(verbose, "Preparing functional info")
     
@@ -252,7 +252,7 @@ load_funcs.prepare <- function(files, verbose=TRUE, type="double")
     ftype <- detect_ftypes(files, verbose=verbose)
     
     # What is the function to read these functional files?
-    reader <- gen_big_reader(ftype, type=type)
+    reader <- gen_big_reader(ftype, ...)
     
     ret <- list(files=files, ftype=ftype, reader=reader)
     class(ret) <- "inlist_prepare"
