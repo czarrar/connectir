@@ -31,10 +31,27 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <h1>
-<a name="about" class="anchor" href="#about"><span class="octicon octicon-link"></span></a>About</h1>
+        <p>Connectir is an R package principally for conducting a Connectome-Wide Association Study (CWAS) using Multivariate-Distance Matrix Regression (MDMR). CWAS with MDMR attempts to find regions of the brain with functional connectivity patterns that are significantly associated with a phenotype. For instance, if you have two groups (ADHD and Controls) and each subject has a resting-state fMRI scan, then CWAS-MDMR would find brain regions whose connectivity patterns significantly differentiate the two groups. Further post-hoc analyses such as seed-based correlation analyses would be needed to discern the specific connections and direction of the group difference.</p>
 
-<p>Connectir is an R package principally for conducting a Connectome-Wide Association Study (CWAS) using Multivariate-Distance Matrix Regression (MDMR). CWAS with MDMR attempts to find regions of the brain with functional connectivity patterns that are significantly associated with a phenotype. For instance, if you have two groups (ADHD and Controls) and each subject has a resting-state fMRI scan, then CWAS-MDMR would find brain regions whose connectivity patterns significantly differentiate the two groups. Further post-hoc analyses such as seed-based correlation analyses would be needed to discern the specific connections and direction of the group difference. The CWAS-MDMR results simply tell you which regions have a significant connectivity effect.</p>
+<p>On this page, we show how to install the connectir package and associated command-line scripts (Section 1). Then, we will give a brief tutorial on how to run a vanilla CWAS analysis with our code and leave the details for our wiki (Section 2). Finally, we have links to our publications and conference presentations (Section 3). Please <a href="zarrar.shehzad@yale.edu">contact me</a> if you have any questions.</p>
+
+<h1>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h1>
+
+<p>I will be using two files from the <a href="http://github.com/czarrar/Rinstall">Rinstall github repository</a> here. There are two steps in the installation:</p>
+
+<ol>
+<li>Install R</li>
+<li>Install the relevant packages within R including connectir</li>
+</ol><h2>
+<a name="install-r" class="anchor" href="#install-r"><span class="octicon octicon-link"></span></a>Install R</h2>
+
+<p>You can do your own install of R. For instance, you can use the binaries on the <a href="http://cran.r-project.org">main R website</a>. I would also recommend installing <a href="http://www.rstudio.com">Rstudio</a>, which is a GUI that wraps around R and makes it more interactive like matlab. You can also install R via my own script that links R with a parallel matrix algebra library called openblas. This script is in the <a href="http://github.com/czarrar/Rinstall">Rinstall repo</a> and is called <code>install.py</code>.</p>
+
+<h2>
+<a name="installing-connectir-and-other-r-packages" class="anchor" href="#installing-connectir-and-other-r-packages"><span class="octicon octicon-link"></span></a>Installing Connectir and Other R Packages</h2>
+
+<p>After R is installed, there are several packages within R that need to be installed.</p>
       </section>
     </div>
 
