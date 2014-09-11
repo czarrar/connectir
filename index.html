@@ -106,7 +106,44 @@
 <li>
 <code>-t</code>: Number of parallel linear algebra operations.</li>
 <li>Finally the last argument gives the full path to the output directory.</li>
-</ul>
+</ul><h2>
+<a name="multivariate-distance-matrix-regression-mdmr" class="anchor" href="#multivariate-distance-matrix-regression-mdmr"><span class="octicon octicon-link"></span></a>Multivariate Distance Matrix Regression (MDMR)</h2>
+
+<p>For the options that are the same as before (--memlimit, -c, -t), I will not repeat the description here.</p>
+
+<div class="highlight highlight-R"><pre>connectir_mdmr.R \
+ <span class="o">-</span>i subject_distances_outdir \
+ <span class="o">--</span>formula FSIQ <span class="o">+</span> Age <span class="o">+</span> Sex <span class="o">+</span> meanFD \
+ <span class="o">--</span>model model_evs.csv \ 
+<span class="o">--</span>factors2perm FSIQ \ 
+<span class="o">--</span>memlimit <span class="m">8</span> <span class="o">-</span><span class="kt">c</span> <span class="m">3</span> <span class="o">-</span>t <span class="m">4</span> \
+ <span class="o">--</span><span class="kp">save</span><span class="o">-</span>perms <span class="o">--</span>ignoreprocerror \
+ iq_outdir.mdmr
+</pre></div>
+
+<ul>
+<li>
+<code>-i</code>: Input path to your subject distances directory</li>
+<li>
+<code>--formula:</code>: We use R's <a href="http://science.nature.nps.gov/im/datamgmt/statistics/r/formulas">formula syntax</a>. Each variable represents a column in your model file (i.e., a factor or explanatory variable). The <code>+</code> indicates to combine the different variables in one model. If you want to do an interaction you can use <code>*</code>, which will generate the main effects and interaction. To only look at the interaction (for instance between Age and Sex), you would use <code>:</code> as in <code>Age:Sex</code>.</li>
+<li>
+<code>--model</code>: This is your model file containing all your explanatory variables and covariates in each column. Each row would correspond to each subject/scan in the same order as the input functional file list in <code>connectir_subdist.R</code>. <strong>So ensure that this model file as the rows (scans/subjects) correspond to the rows in -i file list of connectir_subdist.R</strong>.</li>
+<li>
+<code>factors2perm</code>: This indicates the variables in your <em>formula</em> to permute and calculate significance estimates. The other variables will be treated as covariates. In this case, we were interested in full-scale IQ (FSIQ).</li>
+<li> <code>--saveperms</code>: This outputs all the permuted F-statistics into a file. This is needed for now to later calculate (in a separate script), permuted cluster correction.</li>
+<li>
+<code>--ignoreprocerror</code>: Sometimes the code tries to estimate the maximum number of cores on your machine and does this wrong. This option ignores the error that's thrown because of this potential issue.</li>
+<li>The final argument is the output directory for the MDMR script. This should just be the directory name (not the path). The path is set to the subject distances directory given with the -i option.</li>
+</ul><h1>
+<a name="publications" class="anchor" href="#publications"><span class="octicon octicon-link"></span></a>Publications</h1>
+
+<ul>
+<li>Paper</li>
+<li>Resting State 2010 Poster</li>
+<li>HBM 2011 Poster</li>
+<li>HBM 2011 Talk</li>
+<li>Resting State 2014 Poster</li>
+</ul><p>MGH C2P distribution</p>
       </section>
     </div>
 
