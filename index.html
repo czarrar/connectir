@@ -38,20 +38,31 @@
 <h1>
 <a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h1>
 
-<p>I will be using two files from the <a href="http://github.com/czarrar/Rinstall">Rinstall github repository</a> here. There are two steps in the installation:</p>
+<p>I give a quick option first and then describe some other options for the install.</p>
+
+<h2>
+<a name="quick-approach" class="anchor" href="#quick-approach"><span class="octicon octicon-link"></span></a>Quick Approach</h2>
 
 <ol>
-<li>Install R</li>
-<li>Install the relevant packages within R including connectir</li>
+<li>Install <a href="http://cran.r-project.org">R</a>) and optionally <a href="http://www.rstudio.com">Rstudio</a>.</li>
+<li>Install the relevant packages within R including connectir using my script <a href="https://github.com/czarrar/Rinstall/blob/master/connectir_install.R">connectir_install.R</a>.</li>
 </ol><h2>
-<a name="install-r" class="anchor" href="#install-r"><span class="octicon octicon-link"></span></a>Install R</h2>
+<a name="details-and-troubleshooting" class="anchor" href="#details-and-troubleshooting"><span class="octicon octicon-link"></span></a>Details and Troubleshooting</h2>
+
+<h3>
+<a name="parallel-matrix-algebra-operations" class="anchor" href="#parallel-matrix-algebra-operations"><span class="octicon octicon-link"></span></a>Parallel Matrix Algebra Operations</h3>
+
+<p>There are two ways to parallelize the analyses. One approach is to divide your workflow into smaller chunks and run those separately (like separate processes). This comes with the R packages installed with <a href="https://github.com/czarrar/Rinstall/blob/master/connectir_install.R">connectir_install.R</a>. Another approach is to run each matrix algebra operation (e.g., dot product) in parallel, which go into detail in this section. There's a whole section in the official <a href="http://cran.r-project.org/doc/manuals/r-patched/R-admin.html#Linear-algebra">R Installation and Administration</a> page about linking to different linear algebra routines. Below I'll go through the different options and the best ones I found.</p>
+
+<h4>
+<a name="intel-mkl" class="anchor" href="#intel-mkl"><span class="octicon octicon-link"></span></a>Intel MKL</h4>
 
 <p>You can do your own install of R. For instance, you can use the binaries on the <a href="http://cran.r-project.org">main R website</a>. I would also recommend installing <a href="http://www.rstudio.com">Rstudio</a>, which is a GUI that wraps around R and makes it more interactive like matlab. You can also install R via my own script that links R with a parallel matrix algebra library called openblas. This script is in the <a href="http://github.com/czarrar/Rinstall">Rinstall repo</a> and is called <code>install.py</code>.</p>
 
 <h2>
 <a name="installing-connectir-and-other-r-packages" class="anchor" href="#installing-connectir-and-other-r-packages"><span class="octicon octicon-link"></span></a>Installing Connectir and Other R Packages</h2>
 
-<p>After R is installed, there are several packages within R that need to be installed.</p>
+<p>After R is setup, there are several packages within R that need to be installed. To do this, please run <a href="https://github.com/czarrar/Rinstall/blob/master/connectir_install.R">connectir_install.R</a>.</p>
       </section>
     </div>
 
