@@ -31,14 +31,12 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <p>Connectir is an R package principally for conducting a Connectome-Wide Association Study (CWAS) using Multivariate-Distance Matrix Regression (MDMR). CWAS with MDMR attempts to find regions of the brain with functional connectivity patterns that are significantly associated with a phenotype. For instance, if you have two groups (ADHD and Controls) and each subject has a resting-state fMRI scan, then CWAS-MDMR would find brain regions whose connectivity patterns significantly differentiate the two groups. Further post-hoc analyses such as seed-based correlation analyses would be needed to discern the specific connections and direction of the group difference.</p>
+        <p>Connectir is an R package principally for conducting Connectome-Wide Association Studies (CWAS) using Multivariate-Distance Matrix Regression (MDMR). CWAS with MDMR attempts to find regions of the brain with functional connectivity patterns that are significantly associated with a phenotype. For instance, if you have two groups (ADHD and Controls) and each subject has a resting-state fMRI scan, then CWAS-MDMR would find brain regions whose connectivity patterns significantly differentiate the two groups. Additional post-hoc analyses such as seed-based correlation analyses would be needed to discern the specific connections and direction of any group difference between ADHD and Controls with CWAS-MDMR.</p>
 
-<p>On this page, we show how to install the connectir package and associated command-line scripts (Section 1). Then, we will give a brief tutorial on how to run a vanilla CWAS analysis with our code and leave the details for our wiki (Section 2). Finally, we have links to our publications and conference presentations (Section 3). Please <a href="zarrar.shehzad@yale.edu">contact me</a> if you have any questions.</p>
+<p>On this page, we show how to install the connectir package and associated command-line scripts (Section 1). Then, we give a brief tutorial on how to run a vanilla CWAS analysis and leave the details for the <a href="https://github.com/czarrar/connectir/wiki">wiki</a> (Section 2). Finally, we have links to our publications and conference presentations (Section 3). Please <a href="zarrar.shehzad@yale.edu">contact me</a> if you have any questions.</p>
 
 <h1>
 <a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h1>
-
-<p>I give a quick option first and then describe some other options for the install.</p>
 
 <h2>
 <a name="quick-approach" class="anchor" href="#quick-approach"><span class="octicon octicon-link"></span></a>Quick Approach</h2>
@@ -52,17 +50,33 @@
 <h3>
 <a name="parallel-matrix-algebra-operations" class="anchor" href="#parallel-matrix-algebra-operations"><span class="octicon octicon-link"></span></a>Parallel Matrix Algebra Operations</h3>
 
-<p>There are two ways to parallelize the analyses. One approach is to divide your workflow into smaller chunks and run those separately (like separate processes). This comes with the R packages installed with <a href="https://github.com/czarrar/Rinstall/blob/master/connectir_install.R">connectir_install.R</a>. Another approach is to run each matrix algebra operation (e.g., dot product) in parallel, which go into detail in this section. There's a whole section in the official <a href="http://cran.r-project.org/doc/manuals/r-patched/R-admin.html#Linear-algebra">R Installation and Administration</a> page about linking to different linear algebra routines. Below I'll go through the different options and the best ones I found.</p>
+<p>There are two ways to parallelize the analyses. One approach is to divide your workflow into smaller chunks and run those separately (like separate processes). This comes with the R packages installed with <a href="https://github.com/czarrar/Rinstall/blob/master/connectir_install.R">connectir_install.R</a>. Another approach is to run each matrix algebra operation (e.g., dot product) in parallel, which we go into detail in this section. Below I detail different linear algebra libraries and linking them to R. Note this section is still under development.</p>
 
 <h4>
 <a name="intel-mkl" class="anchor" href="#intel-mkl"><span class="octicon octicon-link"></span></a>Intel MKL</h4>
 
-<p>You can do your own install of R. For instance, you can use the binaries on the <a href="http://cran.r-project.org">main R website</a>. I would also recommend installing <a href="http://www.rstudio.com">Rstudio</a>, which is a GUI that wraps around R and makes it more interactive like matlab. You can also install R via my own script that links R with a parallel matrix algebra library called openblas. This script is in the <a href="http://github.com/czarrar/Rinstall">Rinstall repo</a> and is called <code>install.py</code>.</p>
+<p>If you have Windows, Ubuntu, or RedHat/Centos, you can install Revolution R. This is a version of R compiled with Intel MKL by the company Revolution Analytics available free for academic use. You can get it from <a href="http://www.revolutionanalytics.com/which-r-is-right-for-me">here</a>.</p>
 
-<h2>
-<a name="installing-connectir-and-other-r-packages" class="anchor" href="#installing-connectir-and-other-r-packages"><span class="octicon octicon-link"></span></a>Installing Connectir and Other R Packages</h2>
+<p>Another option is to compile and install R linked with Intel MKL on your own. Here is a good and quick <a href="http://www.r-bloggers.com/compiling-r-3-0-1-with-mkl-support">tutorial</a>.</p>
 
-<p>After R is setup, there are several packages within R that need to be installed. To do this, please run <a href="https://github.com/czarrar/Rinstall/blob/master/connectir_install.R">connectir_install.R</a>.</p>
+<h4>
+<a name="openblas" class="anchor" href="#openblas"><span class="octicon octicon-link"></span></a>OpenBlas</h4>
+
+<p>You can also install R via my own script that links R with a parallel matrix algebra library called openblas. This script is in the <a href="http://github.com/czarrar/Rinstall">Rinstall repo</a> and is called <code>install.py</code>.</p>
+
+<p>Another option for linux is to download repositories. A good/quick <a href="http://www.stat.cmu.edu/%7Enmv/2013/07/09/for-faster-r-use-openblas-instead-better-than-atlas-trivial-to-switch-to-on-ubuntu">tutorial</a> can be found <a href="http://www.stat.cmu.edu/%7Enmv/2013/07/09/for-faster-r-use-openblas-instead-better-than-atlas-trivial-to-switch-to-on-ubuntu">here</a>.</p>
+
+<h3>
+<a name="installing-connectir-and-other-r-packages" class="anchor" href="#installing-connectir-and-other-r-packages"><span class="octicon octicon-link"></span></a>Installing Connectir and Other R Packages</h3>
+
+<p>After R is setup, there are several packages within R that need to be installed. To do this, please run <a href="https://github.com/czarrar/Rinstall/blob/master/connectir_install.R">connectir_install.R</a>. After downloading (or copying and pasting) this script to your machine, you can run it with <code>Rscript connectir_install.R</code>. On certain linux systems, you need to ensure you have libcurl and libxml installed.</p>
+
+<p>This script is also a work in progress, please <a href="mailto:zarrar.shehzad@gmail.com">contact me</a> if you have trouble.</p>
+
+<h1>
+<a name="tutorial" class="anchor" href="#tutorial"><span class="octicon octicon-link"></span></a>Tutorial</h1>
+
+<p>Here we give a vanilla run of CWAS-MDMR and further details can be found on the <a href="https://github.com/czarrar/connectir/wiki">wiki</a>. I also go through this on my recent rposter </p>
       </section>
     </div>
 
