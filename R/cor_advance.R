@@ -147,7 +147,7 @@ reho_worker <- function(mat, ...) {
 }
 
 reho <- function(bigmat, nei=1, nei.dist=3, min.nei=0.5, verbose=TRUE, 
-                 parallel=FALSE, FUN=reho_worker, ...)
+                 parallel=FALSE, FUN=kendall_cpp, ...)
 {
     header <- bigmat@header
     header$dim <- header$dim[1:3]
@@ -195,7 +195,7 @@ reho <- function(bigmat, nei=1, nei.dist=3, min.nei=0.5, verbose=TRUE,
     }
     
     reho.vals <- llply(1:nvoxs, rfun, ..., 
-                       .progress=progress, .inform=TRUE, .verbose=verbose)
+                       .progress=progress)
     reho.vals <- unlist(reho.vals)
     
     return(list(reho=reho.vals, hdr=header, mask=mask))

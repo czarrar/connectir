@@ -341,12 +341,16 @@ load_funcs.scale <- function(inlist, verbose=TRUE, to.copy=FALSE,
     
     progress <- ifelse(verbose, "text", "none")
     
-    if (to.copy)
+    if (to.copy) {
         inlist$funcs_nonscaled <- inlist$funcs
-    
-    inlist$funcs <- llply(inlist$funcs, function(func) {
-        scale_fast(func, to.copy=to.copy, ...)
-    }, .progress=progress, .parallel=parallel)
+        inlist$funcs <- llply(inlist$funcs, function(func) {
+            scale_fast(func, to.copy=to.copy, ...)
+        }, .progress=progress, .parallel=F)
+    } else {
+      l_ply(inlist$funcs, function(func) {
+          scale_fast(func, to.copy=to.copy, ...)
+      }, .progress=progress, .parallel=parallel)
+    }
     
     invisible(gc(FALSE, TRUE))
     
