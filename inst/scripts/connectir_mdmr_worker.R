@@ -73,6 +73,8 @@ tryCatch({
   # check paths exist
   ## indir
   opts$indir <- abspath(opts$indir)
+  if (!file.exists(opts$indir))
+      vstop("input '%s' doesn't exist", opts$indir)
   if (opts$check_subdist)
       invisible(check_subdist(opts$indir))
   ## subdist
