@@ -67,7 +67,7 @@ subdist.memory_limit <- function(memlimit, blocksize, superblocksize,
     ntpts1 <- get_funclist_tpts(inlist1)
     
     if (!is.null(inlist2)) {
-        if (inlist1$nsubs != inlist2$nubs)
+        if (inlist1$nsubs != inlist2$nsubs)
             stop("1st and 2nd set of functional data have different # of subjects")
         
         ntpts2 <- get_funclist_tpts(inlist2)
