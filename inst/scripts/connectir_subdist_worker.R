@@ -343,7 +343,7 @@ tryCatch({
                       parallel=parallel_forks)
   if (!is.null(inlist2)) {
       vcat(opts$verbose, "Checking input functionals (2)")
-      subdist.check_funcs(inlist2, opts$verbose, extra_checks=opts$extra_checks, 
+      subdist.check_funcs(inlist2, opts$verbose, extra_checks=TRUE, 
                           parallel=parallel_forks)
   }
   
