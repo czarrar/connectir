@@ -98,7 +98,7 @@ get_funclist_tpts <- function(inlist) {
             return(hdr$dim[4])
         } else if (inlist$ftype %in% c("space", "tab", "csv")) {
             cmd <- sprintf("wc -l %s | awk '{print $1}'", inlist$files[i])
-            return(system(cmd, intern=T))
+            return(as.integer(system(cmd, intern=T)))
         } else {
             vstop("Cannot read # of time-points for type '%s'", inlist$ftype)
         }
