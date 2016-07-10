@@ -10,14 +10,14 @@
 #include <math.h>
 #include <iostream>
 
+#include <R.h>
+#include <Rinternals.h>
+#include <Rdefines.h>
+
 #include "bigmemory/BigMatrix.h"
 #include "bigmemory/MatrixAccessor.hpp"
 #include "bigmemory/bigmemoryDefines.h"
 #include "bigmemory/isna.hpp"
-
-#include <R.h>
-#include <Rinternals.h>
-#include <Rdefines.h>
 
 extern "C" {
     SEXP ComputePvalsMain(SEXP Rinmat, SEXP Routmat, SEXP Routcol);

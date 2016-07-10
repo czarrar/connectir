@@ -3,15 +3,15 @@
 
 #include "connectir/connectirDefines.h"
 
+#include <R.h>
+#include <Rinternals.h>
+#include <Rdefines.h>
+
 #include <string>
 #include "bigmemory/BigMatrix.h"
 #include "bigmemory/MatrixAccessor.hpp"
 #include "bigmemory/bigmemoryDefines.h"
 #include "bigmemory/isna.hpp"
-
-#include <R.h>
-#include <Rinternals.h>
-#include <Rdefines.h>
 
 #define Z_STOP \
     BEGIN_RCPP \
