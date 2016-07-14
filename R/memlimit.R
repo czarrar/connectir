@@ -16,7 +16,7 @@ get_subdist_memlimit <- function(opts, nsubs, nvoxs, subs.ntpts, nvoxs2=NULL,
     mem_limit <- as.numeric(opts$memlimit)
     
     # RAM for functionals
-    mem_used4func <- sum(sapply(subs.ntpts, function(x) n2gb(x*nvoxs)))
+    mem_used4func <- sum(sapply(subs.ntpts, function(x) n2gb(as.numeric(x)*nvoxs)))
     if (!is.null(nvoxs2)) {
         vcat(opts$verbose, "...%.2f GB used for 1st set of functional data", mem_used4func)
         mem_used4func2 <- sum(sapply(subs.ntpts, function(x) n2gb(x*nvoxs2)))
