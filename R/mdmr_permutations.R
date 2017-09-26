@@ -206,7 +206,7 @@ mdmr_perms.cor_with_perm <- function(rhs, grps, f.ind, o.inds, ...)
 #' @param verbose boolean
 #' @return matrix of nobs x nperms
 mdmr_perms.gather_perms_for_factor <- function(rhs, grps, f.ind, nperms, 
-                                               strata=NULL, max.iter=100, 
+                                               strata=NULL, max.iter=5000, 
                                                include.orig=FALSE, 
                                                verbose=TRUE)
 {
@@ -227,8 +227,7 @@ mdmr_perms.gather_perms_for_factor <- function(rhs, grps, f.ind, nperms,
             } else if (i == max.iter) {
                 msg <- sprintf(paste("Max iteration reached but permutation ", 
                                 "still significantly correlated with model, ", 
-                                "see column %i called %s", sep=""), j, 
-                                names(factors2perm)[factors2perm == j])
+                                sep=""))
                 warning(msg)
             }
         }
