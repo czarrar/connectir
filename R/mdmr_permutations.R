@@ -225,10 +225,10 @@ mdmr_perms.gather_perms_for_factor <- function(rhs, grps, f.ind, nperms,
             if (r <= rthresh) {
                 break
             } else if (i == max.iter) {
-                msg <- sprintf(paste("Max iteration reached but permutation ", 
+                msg <- sprintf(paste("WARNING: Max iteration reached but permutation ", 
                                 "still significantly correlated with model, ", 
                                 sep=""))
-                warning(msg)
+                print(msg)
             }
         }
         return(ps)
