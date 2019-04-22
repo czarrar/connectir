@@ -347,14 +347,14 @@ save_mdmr.modelinfo <- function(mdir, modelinfo)
 save_mdmr.formula <- function(mdir, modelinfo)
 {
     ofile <- file.path(mdir, "formula.txt")
-    cat(as.character(modelinfo$formula)[-c(1:2)], file=ofile)
+    cat(as.character(modelinfo$formula)[-c(1)], file=ofile)
 }
 
 save_mdmr.factors <- function(mdir, modelinfo)
 {
     ofile <- file.path(mdir, "factor_names.txt")
     
-    all.factornames <- names(attr(modelinfo$qrhs, "factors.names"))
+    all.factornames <- names(attr(modelinfo$qrhs, "factor.names"))
     perm.factornames <- names(attr(modelinfo$qrhs, "factors2perm"))
     is <- !(all.factornames %in% perm.factornames)
     cov.factornames <- all.factornames[is]
