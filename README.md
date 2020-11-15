@@ -11,6 +11,8 @@ Advanced functional connectivity functions and scripts including ones for connec
 
 Connectome-wide association studies (CWAS) remain limited by statistical approaches that are computationally intensive, depend on a priori hypotheses, or require stringent correction for multiple comparisons. To address these issues, we proposed a data-driven framework (Shehzad et al., 2014) that provides a comprehensive, voxel-wise survey of brain-behavior relationships using multivariate distance matrix regression (MDMR; Anderson 2001). The approach identifies voxels whose whole-brain connectivity patterns vary significantly with a phenotypic variable. Here, we introduce the R software package `connectir` for applying CWAS on resting-state fMRI data.
 
+![Analytic Workflow](https://github.com/czarrar/connectir/blob/master/Screen%20Shot%202020-11-14%20at%2011.26.06%20PM.png)
+
 # Installation
 
 ## Quick Approach
